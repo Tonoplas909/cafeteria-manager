@@ -28,6 +28,45 @@ export function todayIn(tz, now = new Date()) {
   return { y, m, d, weekday: new Date(Date.UTC(y, m - 1, d)).getUTCDay() };
 }
 
+// "12:15–13:45" -> [12, 15, 13, 45]
+const parseLabel = (label) => {
+  const m = /(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})/.exec(label || '');
+  return m ? [+m[1], +m[2], +m[3], +m[4]] : null;
+};
+
+// The date a weekly shift is shown for: today if it falls on that weekday (even once the
+// shift is over, until midnight), otherwise the next such day. Returns { y, m, d }.
+export function shiftDate(dayName, tz, now = new Date()) {
+  const target = WEEKDAYS.indexOf(dayName);
+  if (target < 0) return null;
+  const t = todayIn(tz, now);
+  const d = new Date(Date.UTC(t.y, t.m - 1, t.d + ((target - t.weekday + 7) % 7)));
+  return { y: d.getUTCFullYear(), m: d.getUTCMonth() + 1, d: d.getUTCDate() };
+}
+
+export const dateKey = ({ y, m, d }) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+export const parseDateKey = (key) => {
+  const [y, m, d] = String(key).split('-').map(Number);
+  return { y, m, d };
+};
+
+// Start and end (epoch ms) of a shift label such as "12:15–13:45" on the given date.
+export function occurrenceOn(date, label, tz) {
+  const p = parseLabel(label);
+  if (!p) return null;
+  return {
+    start: zonedEpoch(date.y, date.m, date.d, p[0], p[1], tz),
+    end: zonedEpoch(date.y, date.m, date.d, p[2], p[3], tz),
+  };
+}
+
+// The occurrence the schedule shows for a weekly shift: { date: 'YYYY-MM-DD', start, end }.
+export function shiftOccurrence(dayName, label, tz, now = new Date()) {
+  const date = shiftDate(dayName, tz, now);
+  const occ = date && occurrenceOn(date, label, tz);
+  return occ ? { date: dateKey(date), ...occ } : null;
+}
+
 // [start, end) of the calendar day (midnight to midnight, in `tz`) containing `epoch`.
 export function localDayBounds(epoch, tz) {
   const t = todayIn(tz, new Date(epoch));

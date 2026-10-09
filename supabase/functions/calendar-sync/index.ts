@@ -4,7 +4,8 @@
 // function (service role) can read it, and never returned to the browser.
 import ICAL from 'npm:ical.js@2.1.0';
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { buildFeed, busyIntervals, nextOccurrence, overlaps } from './core.js';
+import { buildFeed, busyIntervals, overlaps } from './core.js';
+import { dateKey, occurrenceOn, parseDateKey, shiftOccurrence, todayIn } from './core.js';
 import { localDayBounds } from './core.js';
 
 const TZ = 'Europe/Paris';
@@ -75,35 +76,43 @@ async function serveFeed(req: Request) {
   const { data: row } = await db.from('feed_tokens').select('staff_id').eq('token', token).maybeSingle();
   if (!row) return notFound();
 
-  const { data: mine } = await db.from('shift_assignments').select('shift_id').eq('staff_id', row.staff_id);
-  const shiftIds = (mine ?? []).map((m) => m.shift_id as number);
+  const now = new Date();
+  const todayStr = dateKey(todayIn(TZ, now));
+
+  // Shifts this member is placed on, from today on (assignments are per date).
+  const { data: mine } = await db
+    .from('shift_assignments').select('shift_id, date').eq('staff_id', row.staff_id).gte('date', todayStr);
+  const shiftIds = [...new Set((mine ?? []).map((m) => m.shift_id as number))];
   const { data: shifts } = shiftIds.length
     ? await db.from('shifts').select('id, day, time_label').in('id', shiftIds)
     : { data: [] as { id: number; day: string; time_label: string }[] };
 
-  // Colleagues on the same shifts, for the event description.
-  const names = new Map<number, string[]>();
+  // Colleagues on the same shift and date, for the event description.
+  const colleagues = new Map<string, string[]>();
   if (shiftIds.length) {
-    const { data: all } = await db.from('shift_assignments').select('shift_id, staff_id').in('shift_id', shiftIds);
-    const { data: people } = await db.from('staff').select('id, name').in('id', [...new Set((all ?? []).map((a) => a.staff_id))]);
+    const { data: all } = await db
+      .from('shift_assignments').select('shift_id, date, staff_id').in('shift_id', shiftIds).gte('date', todayStr);
+    const { data: people } = await db
+      .from('staff').select('id, name').in('id', [...new Set((all ?? []).map((a) => a.staff_id as number))]);
     const nameOf = new Map((people ?? []).map((p) => [p.id as number, p.name as string]));
     for (const a of all ?? []) {
       if (a.staff_id === row.staff_id) continue;
-      names.set(a.shift_id, [...(names.get(a.shift_id) ?? []), nameOf.get(a.staff_id) ?? '']);
+      const k = `${a.shift_id}|${a.date}`;
+      colleagues.set(k, [...(colleagues.get(k) ?? []), nameOf.get(a.staff_id) ?? '']);
     }
   }
 
-  const now = new Date();
   const events = [];
-  for (const s of shifts ?? []) {
-    const occ = nextOccurrence(s.day, s.time_label, TZ, now); // next date only
-    if (!occ) continue;
-    const date = new Date(occ.start).toISOString().slice(0, 10).replace(/-/g, '');
-    const others = (names.get(s.id) ?? []).filter(Boolean);
+  for (const m of mine ?? []) {
+    const s = (shifts ?? []).find((x) => x.id === m.shift_id);
+    if (!s) continue;
+    const occ = occurrenceOn(parseDateKey(m.date), s.time_label, TZ);
+    if (!occ || occ.end <= now.getTime()) continue; // already over
+    const others = (colleagues.get(`${m.shift_id}|${m.date}`) ?? []).filter(Boolean);
     const when = fr ? `Créneau du ${DAYS_FR[s.day] ?? s.day} ${s.time_label}.` : `${s.day} shift ${s.time_label}.`;
     const withText = others.length ? `\n${fr ? 'Avec' : 'With'} : ${others.join(', ')}` : '';
     events.push({
-      uid: `shift-${s.id}-${date}@campus-cafe`,
+      uid: `shift-${s.id}-${String(m.date).replace(/-/g, '')}@campus-cafe`,
       start: occ.start,
       end: occ.end,
       summary: fr ? 'Service au Campus Café' : 'Campus Café shift',
@@ -152,7 +161,7 @@ Deno.serve(async (req) => {
     // Read events from midnight today so classes earlier today still count as "on campus".
     const from = localDayBounds(now.getTime(), TZ)[0];
     const occurrences = (shifts ?? [])
-      .map((s) => ({ id: s.id as number, occ: nextOccurrence(s.day, s.time_label, TZ, now) }))
+      .map((s) => ({ id: s.id as number, occ: shiftOccurrence(s.day, s.time_label, TZ, now) }))
       .filter((x) => x.occ);
 
     for (const staffId of staffIds) {
