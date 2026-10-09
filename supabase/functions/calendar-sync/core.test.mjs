@@ -160,3 +160,40 @@ test('day headings are written in full', () => {
   assert.equal(formatDay({ y: 2026, m: 10, d: 9 }, 'fr'), 'Vendredi 09 octobre 2026');
   assert.match(formatDay({ y: 2026, m: 10, d: 9 }, 'en'), /^Friday,? 09 October 2026$/);
 });
+
+// ---- Overlap details and tolerance ------------------------------------------
+
+import { overlapDetails } from './core.js';
+
+const detailsFor = (...events) =>
+  overlapDetails(busyIntervals(ICAL, cal(events.join('')), ...WINDOW), thursdayShift.start, thursdayShift.end);
+
+test('a class starting at 13:30 overlaps a 12:15-13:45 shift by 15 minutes', () => {
+  const d = detailsFor(paris('pm', '20261015T133000', '20261015T153000'));
+  assert.equal(d.minutes, 15);
+  assert.equal(iso(d.from), '2026-10-15T11:30:00.000Z'); // 13:30 Paris
+  assert.equal(iso(d.until), '2026-10-15T13:30:00.000Z'); // 15:30 Paris, not clipped to the shift
+});
+
+test('a class starting exactly when a 12:15-13:30 shift ends does not overlap it', () => {
+  const shift = nextOccurrence('Thursday', '12:15–13:30', TZ, NOW);
+  const intervals = busyIntervals(ICAL, cal(paris('pm', '20261015T133000', '20261015T153000')), ...WINDOW);
+  assert.equal(overlapDetails(intervals, shift.start, shift.end).minutes, 0);
+  assert.equal(overlaps(intervals, shift.start, shift.end), false);
+});
+
+test('no overlap means zero minutes and no times', () => {
+  assert.deepEqual(detailsFor(paris('am', '20261015T101500', '20261015T121500')), { minutes: 0, from: null, until: null });
+  assert.deepEqual(detailsFor(), { minutes: 0, from: null, until: null });
+});
+
+test('overlapping events are counted once, separate ones add up', () => {
+  // 12:15-12:45 and 12:30-13:00 overlap each other: 45 min together
+  assert.equal(detailsFor(paris('a', '20261015T121500', '20261015T124500'), paris('b', '20261015T123000', '20261015T130000')).minutes, 45);
+  // 12:15-12:30 and 13:30-13:45 are separate: 15 + 15
+  assert.equal(detailsFor(paris('a', '20261015T121500', '20261015T123000'), paris('b', '20261015T133000', '20261015T134500')).minutes, 30);
+});
+
+test('a class covering the whole shift is 90 minutes', () => {
+  assert.equal(detailsFor(paris('x', '20261015T110000', '20261015T150000')).minutes, 90);
+});

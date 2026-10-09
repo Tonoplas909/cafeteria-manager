@@ -162,6 +162,30 @@ export function busyIntervals(ICAL, icsText, from, to, defaultTz = 'Europe/Paris
 
 export const overlaps = (intervals, start, end) => intervals.some(([s, e]) => s < end && e > start);
 
+// How much of [start, end) is taken by events: total minutes (overlapping events counted once)
+// and the earliest start / latest end of the events involved (not clipped to the shift),
+// or null when nothing overlaps. Event titles are deliberately not kept.
+export function overlapDetails(intervals, start, end) {
+  const hits = intervals.filter(([s, e]) => s < end && e > start);
+  if (!hits.length) return { minutes: 0, from: null, until: null };
+  const clipped = hits.map(([s, e]) => [Math.max(s, start), Math.min(e, end)]).sort((a, b) => a[0] - b[0]);
+  let total = 0;
+  let [curS, curE] = clipped[0];
+  for (const [s, e] of clipped.slice(1)) {
+    if (s <= curE) curE = Math.max(curE, e);
+    else {
+      total += curE - curS;
+      [curS, curE] = [s, e];
+    }
+  }
+  total += curE - curS;
+  return {
+    minutes: Math.round(total / 60000),
+    from: Math.min(...hits.map(([s]) => s)),
+    until: Math.max(...hits.map(([, e]) => e)),
+  };
+}
+
 // ---- iCal feed output ------------------------------------------------------
 
 const esc = (s) =>

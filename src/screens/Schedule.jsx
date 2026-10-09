@@ -4,11 +4,12 @@ import { PlusIcon } from '../icons.jsx';
 import { WEEKDAYS } from '../api.js';
 import { useT } from '../i18n.jsx';
 import { formatDay } from '../dates.js';
+import Unavailable from './Unavailable.jsx';
 
 // "12:15–13:45" -> ["12:15", "13:45"]
 const splitTime = (label) => {
   const m = /(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})/.exec(label || '');
-  return m ? [`${m[1].padStart(2, '0')}:${m[2]}`, `${m[3].padStart(2, '0')}:${m[4]}`] : ['12:15', '13:45'];
+  return m ? [`${m[1].padStart(2, '0')}:${m[2]}`, `${m[3].padStart(2, '0')}:${m[4]}`] : ['12:15', '13:30'];
 };
 
 export default function Schedule({ days, staff, me, isAdmin, actions }) {
@@ -16,12 +17,13 @@ export default function Schedule({ days, staff, me, isAdmin, actions }) {
   const [assigning, setAssigning] = useState(null); // { shift, date }
   const [editing, setEditing] = useState(null); // { id?, day, start, end, needed }
   const [formError, setFormError] = useState(null);
+  const [showUnavailable, setShowUnavailable] = useState(false);
 
   const nameOf = new Map(staff.map((m) => [m.id, m.name]));
 
   const openNew = () => {
     setFormError(null);
-    setEditing({ day: days[0]?.name ?? 'Monday', start: '12:15', end: '13:45', needed: 2 });
+    setEditing({ day: days[0]?.name ?? 'Monday', start: '12:15', end: '13:30', needed: 2 });
   };
   const openEdit = (shift, dayName) => {
     setFormError(null);
@@ -37,11 +39,18 @@ export default function Schedule({ days, staff, me, isAdmin, actions }) {
           <h1 className="page-title">{t("Who's on the counter")}</h1>
           <p className="page-lede">{t('Shifts open for cover, and the people whose calendars are free.')}</p>
         </div>
-        {isAdmin && (
-          <button className="btn btn-primary" onClick={openNew}>
-            <PlusIcon /> {t('Add shift')}
-          </button>
-        )}
+        <div className="shift-actions">
+          {days.length > 0 && (
+            <button className="btn btn-secondary" onClick={() => setShowUnavailable(true)}>
+              {t('Who is unavailable')}
+            </button>
+          )}
+          {isAdmin && (
+            <button className="btn btn-primary" onClick={openNew}>
+              <PlusIcon /> {t('Add shift')}
+            </button>
+          )}
+        </div>
       </div>
 
       {days.length === 0 && (
@@ -138,6 +147,8 @@ export default function Schedule({ days, staff, me, isAdmin, actions }) {
           </div>
         ))}
       </div>
+
+      {showUnavailable && <Unavailable days={days} staff={staff} onClose={() => setShowUnavailable(false)} />}
 
       {assigning && (
         <Dialog
