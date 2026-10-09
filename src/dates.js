@@ -9,6 +9,12 @@ export const shiftDate = (dayName, now = new Date()) => shiftDateIn(dayName, TZ,
 
 export const todayKey = (now = new Date()) => dateKey(todayIn(TZ, now));
 
+// "13:30" in Paris time, from an ISO timestamp.
+export const formatTime = (iso) =>
+  iso
+    ? new Date(iso).toLocaleTimeString('fr-FR', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+    : '';
+
 // "vendredi 09 octobre 2026" / "Friday 09 October 2026", first letter capitalised.
 export function formatDay(date, lang) {
   const text = new Date(Date.UTC(date.y, date.m - 1, date.d)).toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-GB', {

@@ -2,7 +2,7 @@ import { useEffect, useId } from 'react';
 import { useT } from './i18n.jsx';
 
 // Modal built on the design system's .dialog classes.
-export default function Dialog({ title, onClose, onSubmit, submitLabel = 'Save', children }) {
+export default function Dialog({ title, onClose, onSubmit, submitLabel = 'Save', wide = false, children }) {
   const { t } = useT();
   const titleId = useId();
 
@@ -14,7 +14,7 @@ export default function Dialog({ title, onClose, onSubmit, submitLabel = 'Save',
 
   return (
     <div className="dialog-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="dialog" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+      <div className={wide ? 'dialog dialog-wide' : 'dialog'} role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <div className="dialog-title" id={titleId}>{title}</div>
         <form
           onSubmit={(e) => {

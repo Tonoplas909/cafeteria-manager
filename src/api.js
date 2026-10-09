@@ -46,6 +46,7 @@ export async function loadAll() {
       assigned: assignments.filter((a) => a.shift_id === s.id && a.date === key).map((a) => a.staff_id),
       busy: status.filter((r) => r.shift_id === s.id && r.busy).map((r) => r.staff_id),
       noClass: status.filter((r) => r.shift_id === s.id && !r.on_campus).map((r) => r.staff_id),
+      status: status.filter((r) => r.shift_id === s.id), // raw rows, for the "unavailable people" popup
     });
   }
   days.sort((a, b) => a.key.localeCompare(b.key));

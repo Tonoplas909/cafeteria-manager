@@ -4,7 +4,7 @@
 // function (service role) can read it, and never returned to the browser.
 import ICAL from 'npm:ical.js@2.1.0';
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { buildFeed, busyIntervals, overlaps } from './core.js';
+import { buildFeed, busyIntervals, overlapDetails, overlaps } from './core.js';
 import { dateKey, occurrenceOn, parseDateKey, shiftOccurrence, todayIn } from './core.js';
 import { localDayBounds } from './core.js';
 
@@ -182,11 +182,16 @@ Deno.serve(async (req) => {
         // Someone with no events all day is not "free": no point coming in just for the shift.
         const status = occurrences.map((x) => {
           const [dayStart, dayEnd] = localDayBounds(x.occ!.start, TZ);
+          const d = overlapDetails(intervals, x.occ!.start, x.occ!.end);
           return {
             shift_id: x.id,
             staff_id: staffId,
-            busy: overlaps(intervals, x.occ!.start, x.occ!.end),
+            busy: d.minutes > 0,
             on_campus: overlaps(intervals, dayStart, dayEnd),
+            // why: minutes taken from the shift and the span of the event(s), never their titles
+            overlap_minutes: d.minutes,
+            busy_from: d.from === null ? null : new Date(d.from).toISOString(),
+            busy_until: d.until === null ? null : new Date(d.until).toISOString(),
           };
         });
         await db.from('shift_status').delete().eq('staff_id', staffId);

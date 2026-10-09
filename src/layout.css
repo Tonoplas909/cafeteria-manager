@@ -170,3 +170,13 @@ select.input { appearance: auto; }
 
 .day-name { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
 .day-name .tag { font-family: var(--font-body); font-size: 12px; }
+
+/* "Unavailable people" popup */
+.dialog-wide { width: min(640px, 100%); }
+.dialog-wide .dialog-body { max-height: 60vh; overflow: auto; padding-right: var(--space-1); }
+.unavail-shift { display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3) var(--space-4); border-radius: var(--radius-lg); background: var(--color-bg); }
+.unavail-head { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.unavail-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.unavail-list li { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; font-size: 14px; }
+.unavail-name { font-weight: 600; }
+.unavail-line { margin: 0; font-size: 14px; }
