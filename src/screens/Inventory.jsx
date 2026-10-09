@@ -93,9 +93,9 @@ export default function Inventory({ inventory, adjustStock, importProducts, canE
                         />
                       </div>
                     </td>
-                    <td>{item.current}</td>
-                    <td>{item.minLevel}</td>
-                    <td>{item.weeklyUsage}</td>
+                    <td data-label={t('In stock')}>{item.current}</td>
+                    <td data-label={t('Minimum')}>{item.minLevel}</td>
+                    <td data-label={t('This week')}>{item.weeklyUsage}</td>
                     <td>
                       <span className={low ? 'tag tag-accent' : 'tag tag-accent-2'}>{low ? t('Low') : t('OK')}</span>
                     </td>
