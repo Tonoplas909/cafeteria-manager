@@ -101,6 +101,17 @@ export default {
   Low: 'Bas',
   OK: 'OK',
   Adjust: 'Ajuster',
+  'Import stock': 'Importer le stock',
+  Import: 'Importer',
+  'SumUp items export (.csv)': 'Export des articles SumUp (.csv)',
+  'Not a SumUp items export (columns "Item name" and "Quantity" are required).':
+    'Ce fichier n’est pas un export d’articles SumUp (colonnes « Item name » et « Quantity » requises).',
+  Updated: 'Mis à jour',
+  New: 'Nouveaux',
+  Ignored: 'Ignorés',
+  'New products': 'Nouveaux produits',
+  'Ignored: stock not tracked': 'Ignorés : stock non suivi',
+  '{n} negative quantities will be set to 0.': '{n} quantités négatives seront mises à 0.',
   'Adjust {name}': 'Ajuster {name}',
 
   // Admin

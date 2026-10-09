@@ -1,10 +1,30 @@
 import { useState } from 'react';
 import Dialog from '../Dialog.jsx';
 import { useT } from '../i18n.jsx';
+import { planImport } from '../importStock.js';
 
-export default function Inventory({ inventory, adjustStock, canEdit }) {
+export default function Inventory({ inventory, adjustStock, importProducts, canEdit }) {
   const { t } = useT();
   const [adjusting, setAdjusting] = useState(null);
+  const [importing, setImporting] = useState(false);
+  const [plan, setPlan] = useState(null);
+  const [importError, setImportError] = useState(null);
+
+  const closeImport = () => {
+    setImporting(false);
+    setPlan(null);
+    setImportError(null);
+  };
+  const readFile = async (file) => {
+    setPlan(null);
+    setImportError(null);
+    if (!file) return;
+    try {
+      setPlan(planImport(await file.text(), inventory));
+    } catch (e) {
+      setImportError(e.message);
+    }
+  };
 
   const totalItems = inventory.reduce((s, i) => s + i.current, 0);
   const lowStockCount = inventory.filter((i) => i.current <= i.minLevel).length;
@@ -12,10 +32,15 @@ export default function Inventory({ inventory, adjustStock, canEdit }) {
 
   return (
     <div className="screen-inner">
-      <div>
-        <div className="eyebrow">{t('Stock room')}</div>
-        <h1 className="page-title">{t("What's on the shelf")}</h1>
-        <p className="page-lede">{t('Levels against the minimum, and what each item used this week.')}</p>
+      <div className="page-head">
+        <div>
+          <div className="eyebrow">{t('Stock room')}</div>
+          <h1 className="page-title">{t("What's on the shelf")}</h1>
+          <p className="page-lede">{t('Levels against the minimum, and what each item used this week.')}</p>
+        </div>
+        {canEdit && (
+          <button className="btn btn-secondary" onClick={() => setImporting(true)}>{t('Import stock')}</button>
+        )}
       </div>
 
       <div className="stat-grid">
@@ -110,6 +135,71 @@ export default function Inventory({ inventory, adjustStock, canEdit }) {
               required
             />
           </div>
+        </Dialog>
+      )}
+
+      {importing && (
+        <Dialog
+          title={t('Import stock')}
+          submitLabel="Import"
+          onClose={closeImport}
+          onSubmit={async () => {
+            if (!plan) return;
+            await importProducts(plan);
+            closeImport();
+          }}
+        >
+          <div className="field">
+            <label htmlFor="import-file">{t('SumUp items export (.csv)')}</label>
+            <input
+              id="import-file"
+              type="file"
+              accept=".csv,text/csv"
+              className="input"
+              onChange={(e) => readFile(e.target.files[0])}
+              required
+            />
+          </div>
+          {importError && <p style={{ margin: 0, color: 'var(--color-accent-700)' }}>{t(importError)}</p>}
+          {plan && (
+            <div className="import-summary">
+              <div className="import-stats">
+                <div className="import-stat">
+                  <div className="import-stat-value" style={{ color: 'var(--color-accent-2-700)' }}>{plan.updates.length}</div>
+                  <div className="label-caps">{t('Updated')}</div>
+                </div>
+                <div className="import-stat">
+                  <div className="import-stat-value" style={{ color: 'var(--color-accent-700)' }}>{plan.creates.length}</div>
+                  <div className="label-caps">{t('New')}</div>
+                </div>
+                <div className="import-stat">
+                  <div className="import-stat-value">{plan.skipped.length}</div>
+                  <div className="label-caps">{t('Ignored')}</div>
+                </div>
+              </div>
+              {plan.creates.length > 0 && (
+                <details className="import-details">
+                  <summary>{t('New products')}</summary>
+                  <div className="import-tags">
+                    {plan.creates.map((c) => <span key={c.name} className="tag tag-accent">{c.name}</span>)}
+                  </div>
+                </details>
+              )}
+              {plan.skipped.length > 0 && (
+                <details className="import-details">
+                  <summary>{t('Ignored: stock not tracked')}</summary>
+                  <div className="import-tags">
+                    {plan.skipped.map((n) => <span key={n} className="tag tag-neutral">{n}</span>)}
+                  </div>
+                </details>
+              )}
+              {plan.negatives > 0 && (
+                <p className="text-muted" style={{ margin: 0, fontSize: 13 }}>
+                  {t('{n} negative quantities will be set to 0.', { n: plan.negatives })}
+                </p>
+              )}
+            </div>
+          )}
         </Dialog>
       )}
     </div>

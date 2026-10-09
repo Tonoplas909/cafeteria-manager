@@ -63,6 +63,8 @@ export async function loadAll() {
       weeklyUsage: p.weekly_usage,
       cost: p.cost,
       price: p.price,
+      category: p.category,
+      externalId: p.external_id,
     })),
     calendars: calendars.map((c) => ({ id: c.id, name: c.name, staffId: c.staff_id, lastSync: c.last_sync })),
   };
@@ -90,6 +92,36 @@ export const api = {
   // products
   addProduct: (p) => supabase.from('products').insert(p).then(check),
   removeProduct: (id) => supabase.from('products').delete().eq('id', id).then(check),
+  // Applies a plan from importStock.js: updates stock/price of known products, adds the rest.
+  async importProducts({ updates, creates }) {
+    await Promise.all(
+      updates.map((u) =>
+        supabase
+          .from('products')
+          .update({
+            current: u.current,
+            ...(u.price != null && { price: u.price }),
+            ...(u.category && { category: u.category }),
+            ...(u.externalId && { external_id: u.externalId }),
+          })
+          .eq('id', u.id)
+          .then(check),
+      ),
+    );
+    if (creates.length) {
+      check(
+        await supabase.from('products').insert(
+          creates.map((c) => ({
+            name: c.name,
+            current: c.current,
+            price: c.price ?? 0,
+            category: c.category,
+            external_id: c.externalId,
+          })),
+        ),
+      );
+    }
+  },
   adjustStock: (id, current) => supabase.from('products').update({ current }).eq('id', id).then(check),
 
   // shifts
