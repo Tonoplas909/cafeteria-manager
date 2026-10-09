@@ -3,6 +3,7 @@ import Dialog from '../Dialog.jsx';
 import { PlusIcon } from '../icons.jsx';
 import { WEEKDAYS } from '../api.js';
 import { useT } from '../i18n.jsx';
+import { formatDay } from '../dates.js';
 
 // "12:15–13:45" -> ["12:15", "13:45"]
 const splitTime = (label) => {
@@ -11,8 +12,8 @@ const splitTime = (label) => {
 };
 
 export default function Schedule({ days, staff, me, isAdmin, actions }) {
-  const { t } = useT();
-  const [assigning, setAssigning] = useState(null); // { shift, dayName }
+  const { t, lang } = useT();
+  const [assigning, setAssigning] = useState(null); // { shift, date }
   const [editing, setEditing] = useState(null); // { id?, day, start, end, needed }
   const [formError, setFormError] = useState(null);
 
@@ -32,7 +33,7 @@ export default function Schedule({ days, staff, me, isAdmin, actions }) {
     <div className="screen-inner">
       <div className="page-head">
         <div>
-          <div className="eyebrow">{t('This week')}</div>
+          <div className="eyebrow">{t('Coming up')}</div>
           <h1 className="page-title">{t("Who's on the counter")}</h1>
           <p className="page-lede">{t('Shifts open for cover, and the people whose calendars are free.')}</p>
         </div>
@@ -53,8 +54,11 @@ export default function Schedule({ days, staff, me, isAdmin, actions }) {
 
       <div className="stack gap-6">
         {days.map((day) => (
-          <div key={day.name} className="card elev-sm day-card">
-            <div className="day-name">{t(day.name)}</div>
+          <div key={day.key} className="card elev-sm day-card">
+            <div className="day-name">
+              {formatDay(day.date, lang)}
+              {day.isToday && <span className="tag tag-accent">{t('Today')}</span>}
+            </div>
             <div className="shift-grid">
               {day.shifts.map((shift) => {
                 const open = shift.needed - shift.assigned.length;
@@ -89,7 +93,7 @@ export default function Schedule({ days, staff, me, isAdmin, actions }) {
                         <>
                           <button
                             className="btn btn-secondary"
-                            onClick={() => setAssigning({ shift, dayName: day.name })}
+                            onClick={() => setAssigning({ shift, date: day.date })}
                           >
                             {t('Assign staff')}
                           </button>
@@ -101,7 +105,7 @@ export default function Schedule({ days, staff, me, isAdmin, actions }) {
                         <button
                           className="btn btn-secondary"
                           disabled={open <= 0 && !mine}
-                          onClick={() => actions.toggleSelf(shift.id, mine)}
+                          onClick={() => actions.toggleSelf(shift.id, shift.dateKey, mine)}
                         >
                           {mine ? t('Leave shift') : t('Take shift')}
                         </button>
@@ -137,11 +141,11 @@ export default function Schedule({ days, staff, me, isAdmin, actions }) {
 
       {assigning && (
         <Dialog
-          title={`${t(assigning.dayName)} · ${assigning.shift.time}`}
+          title={`${formatDay(assigning.date, lang)} · ${assigning.shift.time}`}
           submitLabel="Save"
           onClose={() => setAssigning(null)}
           onSubmit={(data) => {
-            actions.assignShift(assigning.shift.id, data.getAll('staff').map(Number));
+            actions.assignShift(assigning.shift.id, assigning.shift.dateKey, data.getAll('staff').map(Number));
             setAssigning(null);
           }}
         >

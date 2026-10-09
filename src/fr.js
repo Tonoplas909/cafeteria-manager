@@ -44,6 +44,8 @@ export default {
 
   // Schedule
   'This week': 'Cette semaine',
+  'Coming up': 'À venir',
+  Today: "Aujourd'hui",
   "Who's on the counter": 'Qui est au comptoir',
   'Shifts open for cover, and the people whose calendars are free.':
     'Les créneaux à pourvoir, et les personnes dont l’agenda est libre.',

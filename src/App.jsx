@@ -100,7 +100,9 @@ function Signed({ session }) {
     updateShift: run(api.updateShift),
     deleteShift: run(api.deleteShift),
     assignShift: run(api.assignShift),
-    toggleSelf: run((shiftId, joined) => (joined ? api.leaveShift(shiftId, me.id) : api.joinShift(shiftId, me.id))),
+    toggleSelf: run((shiftId, date, joined) =>
+      joined ? api.leaveShift(shiftId, date, me.id) : api.joinShift(shiftId, date, me.id),
+    ),
     // calendars
     connectCalendar: run(api.connectCalendar),
     disconnectCalendar: run(api.disconnectCalendar),
