@@ -99,3 +99,64 @@ test('a class earlier today still counts for today\'s shift', () => {
   const intervals = busyIntervals(ICAL, cal(paris('m', '20261009T090000', '20261009T100000')), ...WINDOW);
   assert.equal(overlaps(intervals, dayStart, dayEnd), true);
 });
+
+// ---- Dates shown on the schedule -------------------------------------------
+
+import { shiftDate, shiftOccurrence, dateKey, occurrenceOn, parseDateKey } from './core.js';
+import { shiftDate as clientShiftDate, todayKey, formatDay } from '../../../src/dates.js';
+
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+const keys = (now) => Object.fromEntries(DAYS.map((d) => [d, dateKey(shiftDate(d, TZ, now))]));
+
+test('on a Thursday, Monday to Wednesday are next week and the days run in order', () => {
+  const thursday = new Date('2026-10-15T08:00:00Z'); // Thu 15 Oct, 10:00 Paris
+  assert.deepEqual(keys(thursday), {
+    Monday: '2026-10-19',
+    Tuesday: '2026-10-20',
+    Wednesday: '2026-10-21',
+    Thursday: '2026-10-15', // today
+    Friday: '2026-10-16',
+  });
+});
+
+test('today stays shown until midnight, even after its shift is over', () => {
+  const lateFriday = new Date('2026-10-09T20:00:00Z'); // Fri 9 Oct, 22:00 Paris
+  assert.equal(keys(lateFriday).Friday, '2026-10-09');
+  const justAfterMidnight = new Date('2026-10-09T22:00:00Z'); // Sat 10 Oct, 00:00 Paris
+  assert.equal(keys(justAfterMidnight).Friday, '2026-10-16');
+});
+
+test('the day changes at Paris midnight, not UTC midnight', () => {
+  assert.equal(dateKey(shiftDate('Saturday', TZ, new Date('2026-10-09T21:59:00Z'))), '2026-10-10'); // 23:59 Paris Fri
+  assert.equal(dateKey(shiftDate('Friday', TZ, new Date('2026-10-09T21:59:00Z'))), '2026-10-09');
+  assert.equal(dateKey(shiftDate('Friday', TZ, new Date('2026-10-09T22:01:00Z'))), '2026-10-16'); // 00:01 Paris Sat
+});
+
+test('rolling across a month, a year and the end of summer time', () => {
+  assert.equal(dateKey(shiftDate('Wednesday', TZ, new Date('2026-12-30T12:00:00Z'))), '2026-12-30');
+  assert.equal(dateKey(shiftDate('Monday', TZ, new Date('2026-12-30T12:00:00Z'))), '2027-01-04');
+  // Monday after the clocks go back (25 Oct 2026): 12:15 Paris = 11:15Z
+  const occ = shiftOccurrence('Monday', '12:15–13:45', TZ, new Date('2026-10-23T12:00:00Z'));
+  assert.equal(occ.date, '2026-10-26');
+  assert.equal(iso(occ.start), '2026-10-26T11:15:00.000Z');
+});
+
+test('occurrenceOn builds the shift on a stored date', () => {
+  const occ = occurrenceOn(parseDateKey('2026-10-13'), '12:15–13:45', TZ);
+  assert.equal(iso(occ.start), '2026-10-13T10:15:00.000Z');
+  assert.equal(iso(occ.end), '2026-10-13T11:45:00.000Z');
+});
+
+test('the page and the sync use the same dates', () => {
+  for (const now of ['2026-10-09T09:00:00Z', '2026-10-15T08:00:00Z', '2026-12-30T12:00:00Z', '2026-10-09T22:30:00Z']) {
+    for (const day of [...DAYS, 'Saturday', 'Sunday']) {
+      assert.equal(dateKey(clientShiftDate(day, new Date(now))), dateKey(shiftDate(day, TZ, new Date(now))), `${day} @ ${now}`);
+    }
+  }
+  assert.equal(todayKey(new Date('2026-10-09T22:30:00Z')), '2026-10-10');
+});
+
+test('day headings are written in full', () => {
+  assert.equal(formatDay({ y: 2026, m: 10, d: 9 }, 'fr'), 'Vendredi 09 octobre 2026');
+  assert.match(formatDay({ y: 2026, m: 10, d: 9 }, 'en'), /^Friday,? 09 October 2026$/);
+});

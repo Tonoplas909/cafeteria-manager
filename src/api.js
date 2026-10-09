@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { shiftDate, dateKey, todayKey } from './dates.js';
 
 export const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -24,22 +25,30 @@ export async function loadAll() {
   ]);
 
   const withCalendar = new Set(calendars.map((c) => c.staff_id));
+  // Each weekly shift is shown on its next date (today until midnight, else the next such day),
+  // and placements belong to that date. Days run in date order, so on a Thursday Monday to
+  // Wednesday are next week's.
+  const today = todayKey();
   const days = [];
   for (const s of shifts) {
-    let day = days.find((d) => d.name === s.day);
+    const date = shiftDate(s.day);
+    const key = dateKey(date);
+    let day = days.find((d) => d.key === key);
     if (!day) {
-      day = { name: s.day, shifts: [] };
+      day = { key, date, name: s.day, isToday: key === today, shifts: [] };
       days.push(day);
     }
     day.shifts.push({
       id: s.id,
+      dateKey: key,
       time: s.time_label,
       needed: s.needed,
-      assigned: assignments.filter((a) => a.shift_id === s.id).map((a) => a.staff_id),
+      assigned: assignments.filter((a) => a.shift_id === s.id && a.date === key).map((a) => a.staff_id),
       busy: status.filter((r) => r.shift_id === s.id && r.busy).map((r) => r.staff_id),
       noClass: status.filter((r) => r.shift_id === s.id && !r.on_campus).map((r) => r.staff_id),
     });
   }
+  days.sort((a, b) => a.key.localeCompare(b.key));
   // Purely indicative hints, never a rule. "Free" = has a synced calendar, has at least one
   // event that day (so is on campus anyway) and isn't busy during the day's shifts.
   // Someone with no events all day isn't listed as free: no point coming in just for a shift.
@@ -130,20 +139,20 @@ export const api = {
   updateShift: (id, s) =>
     supabase.from('shifts').update({ ...s, day_order: WEEKDAYS.indexOf(s.day) + 1 }).eq('id', id).then(check),
   deleteShift: (id) => supabase.from('shifts').delete().eq('id', id).then(check),
-  async assignShift(shiftId, staffIds) {
-    check(await supabase.from('shift_assignments').delete().eq('shift_id', shiftId));
+  async assignShift(shiftId, date, staffIds) {
+    check(await supabase.from('shift_assignments').delete().eq('shift_id', shiftId).eq('date', date));
     if (staffIds.length) {
       check(
         await supabase
           .from('shift_assignments')
-          .insert(staffIds.map((staff_id) => ({ shift_id: shiftId, staff_id }))),
+          .insert(staffIds.map((staff_id) => ({ shift_id: shiftId, date, staff_id }))),
       );
     }
   },
-  joinShift: (shiftId, staffId) =>
-    supabase.from('shift_assignments').insert({ shift_id: shiftId, staff_id: staffId }).then(check),
-  leaveShift: (shiftId, staffId) =>
-    supabase.from('shift_assignments').delete().eq('shift_id', shiftId).eq('staff_id', staffId).then(check),
+  joinShift: (shiftId, date, staffId) =>
+    supabase.from('shift_assignments').insert({ shift_id: shiftId, date, staff_id: staffId }).then(check),
+  leaveShift: (shiftId, date, staffId) =>
+    supabase.from('shift_assignments').delete().eq('shift_id', shiftId).eq('date', date).eq('staff_id', staffId).then(check),
 
   // calendars
   connectCalendar: (url) => invoke('calendar-sync', { action: 'connect', url }),
