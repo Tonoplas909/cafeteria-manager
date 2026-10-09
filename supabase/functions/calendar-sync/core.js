@@ -56,10 +56,30 @@ export function nextOccurrence(dayName, timeLabel, tz, now = new Date()) {
   return null;
 }
 
+const validTz = (tz) => {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 // Busy [startMs, endMs] intervals between `from` and `to` (epoch ms) from an iCal feed.
 // Ignores all-day, cancelled and "free" (transparent) events.
-export function busyIntervals(ICAL, icsText, from, to) {
+// Times whose timezone the feed doesn't define (a TZID with no VTIMEZONE, or no zone at all)
+// are "floating" for ical.js, which would read them in the server's zone (UTC) and shift them
+// by hours. They are read in the event's own TZID when it is a real IANA zone, else `defaultTz`.
+export function busyIntervals(ICAL, icsText, from, to, defaultTz = 'Europe/Paris') {
   ICAL.TimezoneService.reset();
+
+  const epochOf = (tm, tzid) => {
+    if (tm.zone === ICAL.Timezone.localTimezone) {
+      return zonedEpoch(tm.year, tm.month, tm.day, tm.hour, tm.minute, tzid && validTz(tzid) ? tzid : defaultTz);
+    }
+    return tm.toJSDate().getTime();
+  };
+  const tzidOf = (ev, prop) => ev.component.getFirstProperty(prop)?.getParameter('tzid');
   const root = new ICAL.Component(ICAL.parse(icsText));
   for (const vtz of root.getAllSubcomponents('vtimezone')) {
     try { ICAL.TimezoneService.register(vtz); } catch { /* unknown zone: fall back to UTC */ }
@@ -83,17 +103,19 @@ export function busyIntervals(ICAL, icsText, from, to) {
 
   for (const ev of masters.values()) {
     if (skip(ev)) continue;
+    const startTz = tzidOf(ev, 'dtstart');
+    const endTz = tzidOf(ev, 'dtend') ?? startTz;
     if (!ev.isRecurring()) {
-      push(ev.startDate.toJSDate().getTime(), ev.endDate.toJSDate().getTime());
+      push(epochOf(ev.startDate, startTz), epochOf(ev.endDate, endTz));
       continue;
     }
     const it = ev.iterator();
     let next;
     for (let n = 0; (next = it.next()) && n < 6000; n++) {
       const d = ev.getOccurrenceDetails(next);
-      const s = d.startDate.toJSDate().getTime();
+      const s = epochOf(d.startDate, startTz);
       if (s >= to) break;
-      push(s, d.endDate.toJSDate().getTime());
+      push(s, epochOf(d.endDate, endTz));
     }
   }
   return out;
