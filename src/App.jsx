@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase, loadAll, api, auth } from './api.js';
 import Login, { SetPassword } from './Login.jsx';
 import Dialog from './Dialog.jsx';
+import InstallApp from './InstallApp.jsx';
 import { useT, LangSwitch } from './i18n.jsx';
 import { CoffeeIcon, CalendarIcon, CalendarCheckIcon, PackageIcon, SlidersIcon } from './icons.jsx';
 import Schedule from './screens/Schedule.jsx';
@@ -151,6 +152,7 @@ function Signed({ session }) {
           <LangSwitch />
           <div className="who">{me?.name ?? session.user.email}</div>
           <button className="btn btn-ghost foot-link" onClick={() => setPwDialog(true)}>{t('Change password')}</button>
+          <InstallApp />
           <button className="btn btn-secondary" onClick={() => auth.signOut()}>{t('Sign out')}</button>
         </div>
       </nav>
