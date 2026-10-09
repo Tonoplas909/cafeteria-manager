@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Campus Café">
+  <!-- Campus Café logo: a steaming cup, in the site's terracotta and cream.
+       Full-bleed square (iOS / Android round it); the artwork stays inside the central 80% so it is also maskable. -->
+  <rect width="512" height="512" fill="#c67139"/>
+  <circle cx="256" cy="262" r="190" fill="#d67f48"/>
+
+  <!-- steam -->
+  <g fill="none" stroke="#f5ead8" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M212 150c-16 15 16 29 0 46"/>
+    <path d="M256 134c-16 15 16 29 0 46"/>
+    <path d="M300 150c-16 15 16 29 0 46"/>
+  </g>
+
+  <!-- handle -->
+  <path d="M342 250h18a40 40 0 0 1 0 80h-26" fill="none" stroke="#f5ead8" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- cup -->
+  <path d="M146 226h200v66a72 72 0 0 1-72 72h-56a72 72 0 0 1-72-72z" fill="#f5ead8"/>
+  <path d="M146 268h200v14H146z" fill="#c67139"/>
+
+  <!-- saucer -->
+  <rect x="122" y="378" width="268" height="26" rx="13" fill="#f5ead8"/>
+</svg>

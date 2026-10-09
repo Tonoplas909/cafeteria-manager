@@ -7,6 +7,13 @@ export default {
   Admin: 'Admin',
   'Sign out': 'Se déconnecter',
   'Change password': 'Changer le mot de passe',
+  'Install the app': "Installer l'application",
+  'Add to your home screen': "Ajouter à l'écran d'accueil",
+  'Tap the Share button in the browser toolbar (the square with an arrow).':
+    "Appuyez sur le bouton Partager de la barre du navigateur (le carré avec une flèche).",
+  'Scroll down and tap “Add to Home Screen”.': "Faites défiler et appuyez sur « Sur l'écran d'accueil ».",
+  'Tap “Add”. The app then opens full screen, like any other.':
+    "Appuyez sur « Ajouter ». L'app s'ouvre ensuite en plein écran, comme les autres.",
   'Your password has been changed.': 'Votre mot de passe a été modifié.',
   'Save password': 'Enregistrer le mot de passe',
   'New password': 'Nouveau mot de passe',
