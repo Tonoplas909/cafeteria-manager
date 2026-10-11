@@ -168,6 +168,19 @@ select.input { appearance: auto; }
 .import-tags { display: flex; flex-wrap: wrap; gap: 6px; max-height: 160px; overflow-y: auto; padding: var(--space-2) 0; }
 .hint { font-size: 12px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
 
+/* Target stock + shopping list */
+.target-list, .shopping-list { display: flex; flex-direction: column; }
+.target-row, .shopping-list li {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+  padding: var(--space-2) 0; border-bottom: 1px solid var(--color-divider);
+}
+.target-row:last-child, .shopping-list li:last-child { border-bottom: 0; }
+.target-row label { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.target-row .input { width: 7rem; flex: none; }
+.shopping-list { list-style: none; margin: 0; padding: 0; }
+.shopping-qty { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex: none; }
+.shopping-qty-value { font-family: var(--font-heading); font-size: 24px; line-height: 1; }
+
 .day-name { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
 .day-name .tag { font-family: var(--font-body); font-size: 12px; }
 

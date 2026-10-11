@@ -96,6 +96,7 @@ function Signed({ session }) {
     removeProduct: run(api.removeProduct),
     adjustStock: run(api.adjustStock),
     importProducts: run(api.importProducts),
+    setTargets: run(api.setTargets),
     // shifts
     addShift: run(api.addShift),
     updateShift: run(api.updateShift),
@@ -178,7 +179,7 @@ function Signed({ session }) {
             <Schedule days={data.days} staff={data.staff} me={me} isAdmin={isAdmin} actions={actions} />
           )}
           {status === 'ready' && screen === 'inventory' && (
-            <Inventory inventory={data.inventory} adjustStock={actions.adjustStock} importProducts={actions.importProducts} canEdit={isAdmin} />
+            <Inventory inventory={data.inventory} adjustStock={actions.adjustStock} importProducts={actions.importProducts} setTargets={actions.setTargets} canEdit={isAdmin} />
           )}
           {status === 'ready' && screen === 'calendar' && <MyCalendar mine={myCalendar} actions={actions} />}
           {status === 'ready' && screen === 'admin' && isAdmin && (

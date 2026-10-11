@@ -2,10 +2,18 @@ import { useState } from 'react';
 import Dialog from '../Dialog.jsx';
 import { useT } from '../i18n.jsx';
 import { planImport } from '../importStock.js';
+import { buildShoppingList, shoppingListText } from '../shoppingList.js';
 
-export default function Inventory({ inventory, adjustStock, importProducts, canEdit }) {
-  const { t } = useT();
+// Empty field = no target.
+const readTarget = (value) => (value === '' || value == null ? null : Math.max(0, Number(value)));
+
+export default function Inventory({ inventory, adjustStock, importProducts, setTargets, canEdit }) {
+  const { t, lang } = useT();
   const [adjusting, setAdjusting] = useState(null);
+  const [editingTargets, setEditingTargets] = useState(false);
+  const [shopping, setShopping] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState(null);
   const [importing, setImporting] = useState(false);
   const [plan, setPlan] = useState(null);
   const [importError, setImportError] = useState(null);
@@ -26,6 +34,24 @@ export default function Inventory({ inventory, adjustStock, importProducts, canE
     }
   };
 
+  const shoppingList = buildShoppingList(inventory);
+  const hasTargets = inventory.some((i) => i.targetLevel != null);
+  const closeShopping = () => {
+    setShopping(false);
+    setCopied(false);
+    setCopyError(null);
+  };
+  const copyShoppingList = async () => {
+    const date = new Date().toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-GB', { dateStyle: 'long' });
+    try {
+      await navigator.clipboard.writeText(shoppingListText(shoppingList, t, date));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopyError(t('Copy failed. Select the list and copy it by hand.'));
+    }
+  };
+
   const totalItems = inventory.reduce((s, i) => s + i.current, 0);
   const lowStockCount = inventory.filter((i) => i.current <= i.minLevel).length;
   const weeklyUsage = inventory.reduce((s, i) => s + i.weeklyUsage, 0);
@@ -38,9 +64,19 @@ export default function Inventory({ inventory, adjustStock, importProducts, canE
           <h1 className="page-title">{t("What's on the shelf")}</h1>
           <p className="page-lede">{t('Levels against the minimum, and what each item used this week.')}</p>
         </div>
-        {canEdit && (
-          <button className="btn btn-secondary" onClick={() => setImporting(true)}>{t('Import stock')}</button>
-        )}
+        <div className="shift-actions">
+          {canEdit && (
+            <>
+              <button className="btn btn-secondary" onClick={() => setImporting(true)}>{t('Import stock')}</button>
+              <button className="btn btn-secondary" onClick={() => setEditingTargets(true)} disabled={inventory.length === 0}>
+                {t('Set targets')}
+              </button>
+            </>
+          )}
+          <button className="btn btn-primary" onClick={() => setShopping(true)} disabled={inventory.length === 0}>
+            {t('Shopping list')}
+          </button>
+        </div>
       </div>
 
       <div className="stat-grid">
@@ -71,6 +107,7 @@ export default function Inventory({ inventory, adjustStock, importProducts, canE
                 <th>{t('Level')}</th>
                 <th>{t('In stock')}</th>
                 <th>{t('Minimum')}</th>
+                <th>{t('Target')}</th>
                 <th>{t('This week')}</th>
                 <th>{t('Status')}</th>
                 <th></th>
@@ -95,6 +132,7 @@ export default function Inventory({ inventory, adjustStock, importProducts, canE
                     </td>
                     <td data-label={t('In stock')}>{item.current}</td>
                     <td data-label={t('Minimum')}>{item.minLevel}</td>
+                    <td data-label={t('Target')}>{item.targetLevel ?? '—'}</td>
                     <td data-label={t('This week')}>{item.weeklyUsage}</td>
                     <td>
                       <span className={low ? 'tag tag-accent' : 'tag tag-accent-2'}>{low ? t('Low') : t('OK')}</span>
@@ -117,7 +155,7 @@ export default function Inventory({ inventory, adjustStock, importProducts, canE
           title={t('Adjust {name}', { name: adjusting.name })}
           onClose={() => setAdjusting(null)}
           onSubmit={(data) => {
-            adjustStock(adjusting.id, Math.max(0, Number(data.get('current'))));
+            adjustStock(adjusting.id, Math.max(0, Number(data.get('current'))), readTarget(data.get('target')));
             setAdjusting(null);
           }}
         >
@@ -135,6 +173,99 @@ export default function Inventory({ inventory, adjustStock, importProducts, canE
               required
             />
           </div>
+          <div className="field">
+            <label htmlFor="target">{t('Target stock')}</label>
+            <input
+              id="target"
+              name="target"
+              className="input"
+              type="number"
+              min="0"
+              step="any"
+              defaultValue={adjusting.targetLevel ?? ''}
+            />
+            <span className="hint">{t('Leave empty to keep this item off the shopping list.')}</span>
+          </div>
+        </Dialog>
+      )}
+
+      {editingTargets && (
+        <Dialog
+          title={t('Target stock')}
+          wide
+          onClose={() => setEditingTargets(false)}
+          onSubmit={async (data) => {
+            const changed = inventory
+              .map((i) => ({ id: i.id, targetLevel: readTarget(data.get(`target-${i.id}`)), before: i.targetLevel ?? null }))
+              .filter((c) => c.targetLevel !== c.before);
+            if (changed.length) await setTargets(changed.map(({ id, targetLevel }) => ({ id, targetLevel })));
+            setEditingTargets(false);
+          }}
+        >
+          <p className="text-muted" style={{ margin: 0, fontSize: 14 }}>
+            {t('The level each item should be brought back to when restocking. Leave empty for items you don’t restock.')}
+          </p>
+          <div className="target-list">
+            {inventory.map((item) => (
+              <div key={item.id} className="target-row">
+                <label htmlFor={`target-${item.id}`}>
+                  <span style={{ fontWeight: 600 }}>{item.name}</span>
+                  <span className="hint">{t('{n} in stock', { n: item.current })}</span>
+                </label>
+                <input
+                  id={`target-${item.id}`}
+                  name={`target-${item.id}`}
+                  className="input"
+                  type="number"
+                  min="0"
+                  step="any"
+                  defaultValue={item.targetLevel ?? ''}
+                />
+              </div>
+            ))}
+          </div>
+        </Dialog>
+      )}
+
+      {shopping && (
+        <Dialog title={t('Shopping list')} wide onClose={closeShopping}>
+          {shoppingList.items.length === 0 ? (
+            <p className="text-muted" style={{ margin: 0 }}>
+              {hasTargets
+                ? t('Nothing to buy: every item is at or above its target.')
+                : canEdit
+                  ? t('No targets yet. Use “Set targets” to choose how much of each item to keep.')
+                  : t('No targets yet. Ask an admin to set them.')}
+            </p>
+          ) : (
+            <>
+              <ul className="shopping-list">
+                {shoppingList.items.map((i) => (
+                  <li key={i.id}>
+                    <div>
+                      <div style={{ fontWeight: 600 }}>{i.name}</div>
+                      <div className="hint">{t('{current} in stock, target {target}', { current: i.current, target: i.target })}</div>
+                    </div>
+                    <div className="shopping-qty">
+                      <span className="shopping-qty-value">{i.quantity}</span>
+                      {i.cost > 0 && <span className="hint">≈ €{i.cost.toFixed(2)}</span>}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              {shoppingList.total > 0 && (
+                <p style={{ margin: 0, fontWeight: 600, textAlign: 'right' }}>
+                  {t('Estimated cost: €{total}', { total: shoppingList.total.toFixed(2) })}
+                </p>
+              )}
+              <div className="shift-actions">
+                <button type="button" className="btn btn-secondary" onClick={copyShoppingList}>
+                  {copied ? t('Copied') : t('Copy list')}
+                </button>
+              </div>
+              {copyError && <p style={{ margin: 0, color: 'var(--color-accent-700)' }}>{copyError}</p>}
+            </>
+          )}
         </Dialog>
       )}
 

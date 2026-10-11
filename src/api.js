@@ -70,6 +70,7 @@ export async function loadAll() {
       name: p.name,
       current: p.current,
       minLevel: p.min_level,
+      targetLevel: p.target_level,
       weeklyUsage: p.weekly_usage,
       cost: p.cost,
       price: p.price,
@@ -132,7 +133,17 @@ export const api = {
       );
     }
   },
-  adjustStock: (id, current) => supabase.from('products').update({ current }).eq('id', id).then(check),
+  adjustStock: (id, current, targetLevel) =>
+    supabase
+      .from('products')
+      .update({ current, ...(targetLevel !== undefined && { target_level: targetLevel }) })
+      .eq('id', id)
+      .then(check),
+  // targets: [{ id, targetLevel }], targetLevel null clears the target.
+  setTargets: (targets) =>
+    Promise.all(
+      targets.map((t) => supabase.from('products').update({ target_level: t.targetLevel }).eq('id', t.id).then(check)),
+    ),
 
   // shifts
   addShift: (s) =>
