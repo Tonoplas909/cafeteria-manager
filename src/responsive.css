@@ -89,23 +89,23 @@
   .table, .table tbody, .table tr, .table td { display: block; }
   .table thead { display: none; }
   .table tr {
-    display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px var(--space-3);
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px var(--space-3);
     align-items: center; padding: var(--space-3) 0;
     border-bottom: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
   }
   .table tbody tr:last-child { border-bottom: 0; }
   .table tbody tr:hover { background: transparent; }
   .table td { padding: 0; border: 0; width: auto !important; }
-  .table td:nth-child(1) { grid-column: 1 / 5; font-size: 16px; }
-  .table td:nth-child(6) { grid-column: 5 / 7; justify-self: end; grid-row: 1; }
-  .table td:nth-child(2) { grid-column: 1 / 7; }
-  .table td:nth-child(3), .table td:nth-child(4), .table td:nth-child(5) { grid-column: span 2; font-weight: 600; }
+  .table td:nth-child(1) { grid-column: 1 / 4; font-size: 16px; }
+  .table td:nth-child(7) { grid-column: 4 / 5; justify-self: end; grid-row: 1; }
+  .table td:nth-child(2) { grid-column: 1 / 5; }
+  .table td:nth-child(3), .table td:nth-child(4), .table td:nth-child(5), .table td:nth-child(6) { font-weight: 600; }
   .table td[data-label]::before {
     content: attr(data-label); display: block; margin-bottom: 1px;
     font-size: 10px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase;
     color: color-mix(in srgb, var(--color-text) 60%, transparent);
   }
-  .table td:nth-child(7) { grid-column: 1 / 7; text-align: right; }
+  .table td:nth-child(8) { grid-column: 1 / 5; text-align: right; }
   .meter { width: 100%; }
   .import-stats { gap: var(--space-1); }
   .import-stat-value { font-size: 30px; }

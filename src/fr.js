@@ -130,6 +130,23 @@ export default {
   'Ignored: stock not tracked': 'Ignorés : stock non suivi',
   '{n} negative quantities will be set to 0.': '{n} quantités négatives seront mises à 0.',
   'Adjust {name}': 'Ajuster {name}',
+  Target: 'Cible',
+  'Target stock': 'Stock cible',
+  'Set targets': 'Définir les cibles',
+  'Leave empty to keep this item off the shopping list.': 'Laissez vide pour ne pas mettre cet article dans la liste de courses.',
+  'The level each item should be brought back to when restocking. Leave empty for items you don’t restock.':
+    'Le niveau auquel ramener chaque article lors du réapprovisionnement. Laissez vide pour les articles que vous ne rachetez pas.',
+  '{n} in stock': '{n} en stock',
+  'Shopping list': 'Liste de courses',
+  'Shopping list — {date}': 'Liste de courses — {date}',
+  'Nothing to buy: every item is at or above its target.': 'Rien à acheter : chaque article est à sa cible ou au-dessus.',
+  'No targets yet. Use “Set targets” to choose how much of each item to keep.':
+    'Aucune cible pour l’instant. Utilisez « Définir les cibles » pour choisir la quantité à garder de chaque article.',
+  'No targets yet. Ask an admin to set them.': 'Aucune cible pour l’instant. Demandez à un admin de les définir.',
+  '{current} in stock, target {target}': '{current} en stock, cible {target}',
+  'Estimated cost: €{total}': 'Coût estimé : {total} €',
+  'Copy list': 'Copier la liste',
+  'Copy failed. Select the list and copy it by hand.': 'La copie a échoué. Sélectionnez la liste et copiez-la à la main.',
 
   // Admin
   Setup: 'Configuration',
