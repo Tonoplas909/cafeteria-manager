@@ -263,7 +263,9 @@ export default function Inventory({ inventory, adjustStock, importProducts, setT
               <div className="shift-actions">
                 {DRIVE_SITES.map((site) => (
                   <a key={site.name} className="btn btn-secondary drive-link" href={site.url} target="_blank" rel="noopener noreferrer" aria-label={site.name} title={site.name}>
-                    {site.logo ? (
+                    {site.logo?.src ? (
+                      <img src={site.logo.src} width="24" height="24" alt="" />
+                    ) : site.logo ? (
                       <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
                         <path d={site.logo.path} fill={site.logo.color} />
                       </svg>
