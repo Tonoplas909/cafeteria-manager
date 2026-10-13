@@ -3,6 +3,7 @@ import Dialog from '../Dialog.jsx';
 import { useT } from '../i18n.jsx';
 import { planImport } from '../importStock.js';
 import { buildShoppingList, shoppingListText } from '../shoppingList.js';
+import { DRIVE_SITES } from '../driveSites.js';
 
 // Empty field = no target.
 const readTarget = (value) => (value === '' || value == null ? null : Math.max(0, Number(value)));
@@ -258,6 +259,14 @@ export default function Inventory({ inventory, adjustStock, importProducts, setT
                   {t('Estimated cost: €{total}', { total: shoppingList.total.toFixed(2) })}
                 </p>
               )}
+              <p className="hint" style={{ margin: 0 }}>{t('Order online for home delivery:')}</p>
+              <div className="shift-actions">
+                {DRIVE_SITES.map((site) => (
+                  <a key={site.name} className="btn btn-secondary" href={site.url} target="_blank" rel="noopener noreferrer">
+                    {site.name}
+                  </a>
+                ))}
+              </div>
               <div className="shift-actions">
                 <button type="button" className="btn btn-secondary" onClick={copyShoppingList}>
                   {copied ? t('Copied') : t('Copy list')}

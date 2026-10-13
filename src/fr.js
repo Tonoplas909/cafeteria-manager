@@ -139,6 +139,7 @@ export default {
   '{n} in stock': '{n} en stock',
   'Shopping list': 'Liste de courses',
   'Shopping list — {date}': 'Liste de courses — {date}',
+  'Order online for home delivery:': 'Commander en ligne avec livraison à domicile :',
   'Nothing to buy: every item is at or above its target.': 'Rien à acheter : chaque article est à sa cible ou au-dessus.',
   'No targets yet. Use “Set targets” to choose how much of each item to keep.':
     'Aucune cible pour l’instant. Utilisez « Définir les cibles » pour choisir la quantité à garder de chaque article.',
