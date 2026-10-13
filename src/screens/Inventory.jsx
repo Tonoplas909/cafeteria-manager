@@ -262,8 +262,16 @@ export default function Inventory({ inventory, adjustStock, importProducts, setT
               <p className="hint" style={{ margin: 0 }}>{t('Order online for home delivery:')}</p>
               <div className="shift-actions">
                 {DRIVE_SITES.map((site) => (
-                  <a key={site.name} className="btn btn-secondary" href={site.url} target="_blank" rel="noopener noreferrer">
-                    {site.name}
+                  <a key={site.name} className="btn btn-secondary drive-link" href={site.url} target="_blank" rel="noopener noreferrer" aria-label={site.name} title={site.name}>
+                    {site.logo?.src ? (
+                      <img src={site.logo.src} width="24" height="24" alt="" />
+                    ) : site.logo ? (
+                      <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+                        <path d={site.logo.path} fill={site.logo.color} />
+                      </svg>
+                    ) : (
+                      site.name
+                    )}
                   </a>
                 ))}
               </div>
