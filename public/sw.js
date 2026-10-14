@@ -1,4 +1,4 @@
-// Campus Café service worker: makes the app installable and lets it open instantly / offline.
+// Cafet'MIAGE service worker: makes the app installable and lets it open instantly / offline.
 // Only this site's own files are cached. Everything else (the Supabase API, auth, functions)
 // goes straight to the network, so data is never served stale from here.
 // The build step (vite.config.js) fills in the list of this build's files and a version for the cache,

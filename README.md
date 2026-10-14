@@ -1,4 +1,4 @@
-# Campus Café — Cafeteria Manager
+# Cafet'MIAGE — Cafeteria Manager
 
 Staff schedule, stock room and admin for a student-organisation café. React + Vite on the front, Supabase for the database.
 
