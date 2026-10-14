@@ -13,7 +13,7 @@ self.addEventListener('install', (event) => {
     caches
       .open(CACHE)
       // the whole app shell is stored on install, so it opens offline after a single visit
-      .then((cache) => cache.addAll(['./', 'manifest.webmanifest', 'icons/icon-192.png', ...BUILD_FILES]))
+      .then((cache) => cache.addAll(['./', 'manifest.webmanifest', 'icons/icon-192-v2.png', ...BUILD_FILES]))
       .then(() => self.skipWaiting()),
   );
 });
