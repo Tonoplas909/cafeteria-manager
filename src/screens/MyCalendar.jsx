@@ -60,7 +60,7 @@ function ShiftsFeed() {
       ) : (
         !error && <p className="text-muted" style={{ margin: 0 }}>{t('Loading…')}</p>
       )}
-      {error && <div role="alert" style={{ color: 'var(--color-accent-700)', fontSize: 13 }}>{error}</div>}
+      {error && <div role="alert" style={{ color: 'var(--color-danger)', fontSize: 13 }}>{error}</div>}
       <p className="text-muted" style={{ margin: 0, fontSize: 13 }}>
         {t('Google refreshes subscribed calendars only every 12 to 24 hours, so a change can take that long to appear. Treat the address like a password.')}
       </p>

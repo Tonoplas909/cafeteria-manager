@@ -15,9 +15,9 @@
   .brand {
     order: 0; position: sticky; top: 0; z-index: 20;
     padding: var(--space-3) var(--space-4); padding-top: calc(var(--space-3) + env(safe-area-inset-top));
-    background: var(--color-surface);
+    background: var(--color-ink); color: #fff;
   }
-  .brand-logo { width: 36px; height: 36px; }
+  .brand-logo { width: 40px; height: 40px; padding: 3px; border-radius: 10px; }
   .brand-name { font-size: 22px; }
   .brand-name br { display: none; }
 
@@ -30,8 +30,8 @@
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
     flex-direction: row; gap: 4px;
     padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
-    background: var(--color-surface);
-    border-top: 1px solid var(--color-divider);
+    background: var(--color-ink);
+    border-top: 1px solid var(--color-ink);
     box-shadow: 0 -6px 18px color-mix(in srgb, var(--color-neutral-900) 10%, transparent);
   }
   .nav-item {

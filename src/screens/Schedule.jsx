@@ -76,7 +76,7 @@ export default function Schedule({ days, staff, me, isAdmin, actions }) {
                   <div key={shift.id} className="shift">
                     <div className="shift-head">
                       <div className="shift-time">{shift.time}</div>
-                      <span className={open > 0 ? 'tag tag-accent' : 'tag tag-accent-2'}>
+                      <span className={open > 0 ? 'tag tag-warn' : 'tag tag-accent-2'}>
                         {open > 0 ? t('{n} open', { n: open }) : t('Full')}
                       </span>
                     </div>
@@ -89,7 +89,7 @@ export default function Schedule({ days, staff, me, isAdmin, actions }) {
                           <span key={id} className="shift-person">
                             {nameOf.get(id) ?? '—'}
                             {shift.busy.includes(id) && (
-                              <span className="tag tag-accent" title={t('Their calendar shows an event at this time')}>
+                              <span className="tag tag-warn" title={t('Their calendar shows an event at this time')}>
                                 {t('Busy')}
                               </span>
                             )}
@@ -172,7 +172,7 @@ export default function Schedule({ days, staff, me, isAdmin, actions }) {
                 defaultChecked={assigning.shift.assigned.includes(m.id)}
               />
               {m.name}
-              {assigning.shift.busy.includes(m.id) && <span className="tag tag-accent">{t('Busy')}</span>}
+              {assigning.shift.busy.includes(m.id) && <span className="tag tag-warn">{t('Busy')}</span>}
               {!assigning.shift.busy.includes(m.id) && assigning.shift.noClass.includes(m.id) && (
                 <span className="tag tag-neutral">{t('No classes')}</span>
               )}
@@ -232,7 +232,7 @@ export default function Schedule({ days, staff, me, isAdmin, actions }) {
               required
             />
           </div>
-          {formError && <div role="alert" style={{ color: 'var(--color-accent-700)', fontSize: 13 }}>{formError}</div>}
+          {formError && <div role="alert" style={{ color: 'var(--color-danger)', fontSize: 13 }}>{formError}</div>}
           {editing.id && (
             <button
               type="button"

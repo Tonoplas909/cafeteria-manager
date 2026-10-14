@@ -36,7 +36,7 @@ export default function Unavailable({ days, staff, onClose }) {
               <div className="unavail-head">
                 <strong>{formatDay(day.date, lang)}</strong>
                 <span>{shift.time}</span>
-                <span className="tag tag-accent">{t('{n} open', { n: shift.needed - shift.assigned.length })}</span>
+                <span className="tag tag-warn">{t('{n} open', { n: shift.needed - shift.assigned.length })}</span>
               </div>
 
               {busy.length === 0 && noClass.length === 0 && (
