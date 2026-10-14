@@ -1,8 +1,8 @@
 // Dates of the schedule. Reuses the server's date logic so the page and the sync agree.
-import { shiftDate as shiftDateIn, dateKey, parseDateKey, todayIn } from '../supabase/functions/calendar-sync/core.js';
+import { shiftDate as shiftDateIn, dateKey, parseDateKey, todayIn, servicesFrom, HORIZON_DAYS } from '../supabase/functions/calendar-sync/core.js';
 
 export const TZ = 'Europe/Paris';
-export { dateKey, parseDateKey };
+export { dateKey, parseDateKey, servicesFrom, HORIZON_DAYS };
 
 // The date a weekly shift ("Monday"…) is shown for: today if it falls on that weekday, else the next one.
 export const shiftDate = (dayName, now = new Date()) => shiftDateIn(dayName, TZ, now);

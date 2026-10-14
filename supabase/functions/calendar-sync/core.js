@@ -60,6 +60,38 @@ export function occurrenceOn(date, label, tz) {
   };
 }
 
+// How many days the schedule shows, from today: two weeks, so people can plan ahead.
+export const HORIZON_DAYS = 14;
+
+// The services of the `count` days starting at `from` ({ y, m, d }): at most one a day.
+// `weekly` holds the usual hours, one row per ISO weekday (1 = Monday … 7 = Sunday):
+// [{ weekday, time_label, needed }]. `overrides` holds exceptions for single dates:
+// [{ date: 'YYYY-MM-DD', closed, time_label, needed }], where a null time or count falls
+// back to the usual one. A date is open when it has a time from either source and isn't
+// closed. Days with no service are left out, except closed exceptions, which are kept
+// (closed: true) so the schedule can say the day is shut.
+export function servicesFrom(weekly, overrides, from, count) {
+  const usual = new Map(weekly.map((w) => [Number(w.weekday), w]));
+  const exceptions = new Map(overrides.map((o) => [String(o.date), o]));
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    const d = new Date(Date.UTC(from.y, from.m - 1, from.d + i));
+    const date = { y: d.getUTCFullYear(), m: d.getUTCMonth() + 1, d: d.getUTCDate() };
+    const key = dateKey(date);
+    const weekday = d.getUTCDay() || 7;
+    const w = usual.get(weekday);
+    const o = exceptions.get(key);
+    if (o?.closed) {
+      out.push({ key, date, weekday, closed: true, exception: true });
+      continue;
+    }
+    const time = o?.time_label ?? w?.time_label;
+    if (!time) continue;
+    out.push({ key, date, weekday, closed: false, exception: Boolean(o), time, needed: o?.needed ?? w?.needed ?? 1 });
+  }
+  return out;
+}
+
 // The occurrence the schedule shows for a weekly shift: { date: 'YYYY-MM-DD', start, end }.
 export function shiftOccurrence(dayName, label, tz, now = new Date()) {
   const date = shiftDate(dayName, tz, now);

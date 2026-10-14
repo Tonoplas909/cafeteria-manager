@@ -197,3 +197,56 @@ test('overlapping events are counted once, separate ones add up', () => {
 test('a class covering the whole shift is 90 minutes', () => {
   assert.equal(detailsFor(paris('x', '20261015T110000', '20261015T150000')).minutes, 90);
 });
+
+// ---- services by date ------------------------------------------------------------------
+import { servicesFrom, HORIZON_DAYS } from './core.js';
+
+const WEEK = [
+  { weekday: 1, time_label: '12:15–13:45', needed: 2 }, // Monday
+  { weekday: 3, time_label: '11:30–14:00', needed: 3 }, // Wednesday
+];
+const thu = { y: 2026, m: 10, d: 15 }; // a Thursday
+
+test('two different Mondays are two separate services, told apart by their date', () => {
+  const s = servicesFrom(WEEK, [], thu, HORIZON_DAYS);
+  const mondays = s.filter((x) => x.weekday === 1);
+  assert.deepEqual(mondays.map((x) => x.key), ['2026-10-19', '2026-10-26']);
+  assert.ok(mondays.every((x) => x.time === '12:15–13:45' && x.needed === 2 && !x.exception));
+});
+
+test('only days with usual hours are open, in date order, one service a day at most', () => {
+  const s = servicesFrom(WEEK, [], thu, 7);
+  assert.deepEqual(s.map((x) => x.key), ['2026-10-19', '2026-10-21']);
+  assert.equal(new Set(s.map((x) => x.key)).size, s.length);
+});
+
+test('an exception changes one date only', () => {
+  const s = servicesFrom(WEEK, [{ date: '2026-10-19', closed: false, time_label: '12:00–13:00', needed: null }], thu, HORIZON_DAYS);
+  const [first, second] = s.filter((x) => x.weekday === 1);
+  assert.equal(first.time, '12:00–13:00');
+  assert.equal(first.needed, 2); // falls back to the usual count
+  assert.ok(first.exception);
+  assert.equal(second.time, '12:15–13:45');
+  assert.ok(!second.exception);
+});
+
+test('a closed date is kept as closed, the same weekday next week stays open', () => {
+  const s = servicesFrom(WEEK, [{ date: '2026-10-21', closed: true }], thu, HORIZON_DAYS);
+  const weds = s.filter((x) => x.weekday === 3);
+  assert.deepEqual(weds.map((x) => [x.key, x.closed]), [['2026-10-21', true], ['2026-10-28', false]]);
+});
+
+test('an exception can open a day that is normally closed', () => {
+  const s = servicesFrom(WEEK, [{ date: '2026-10-16', closed: false, time_label: '10:00–12:00', needed: 1 }], thu, 3);
+  assert.deepEqual(s.map((x) => [x.key, x.time, x.needed]), [['2026-10-16', '10:00–12:00', 1]]);
+});
+
+test('an exception without a time on a normally closed day stays closed', () => {
+  const s = servicesFrom(WEEK, [{ date: '2026-10-16', closed: false, time_label: null, needed: 4 }], thu, 2);
+  assert.deepEqual(s, []);
+});
+
+test('sunday is weekday 7 and the range rolls across months and years', () => {
+  const s = servicesFrom([{ weekday: 7, time_label: '10:00–11:00', needed: 1 }], [], { y: 2026, m: 12, d: 28 }, 14);
+  assert.deepEqual(s.map((x) => x.key), ['2027-01-03', '2027-01-10']);
+});

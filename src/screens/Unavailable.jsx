@@ -7,23 +7,22 @@ export default function Unavailable({ days, staff, onClose }) {
   const { t, lang } = useT();
   const nameOf = new Map(staff.map((m) => [m.id, m.name]));
 
-  const toCover = days.flatMap((day) =>
-    day.shifts
-      .filter((shift) => shift.assigned.length < shift.needed)
-      .map((shift) => {
-        const rows = shift.status ?? [];
-        const placed = new Set(shift.assigned);
-        const named = (r) => ({ id: r.staff_id, name: nameOf.get(r.staff_id) ?? '—', placed: placed.has(r.staff_id) });
-        return {
-          day,
-          shift,
-          busy: rows.filter((r) => r.busy).map((r) => ({ ...named(r), row: r })),
-          noClass: rows.filter((r) => !r.busy && !r.on_campus).map(named),
-          // people whose calendar hasn't been read for this shift yet
-          unknown: staff.filter((m) => !rows.some((r) => r.staff_id === m.id)).map((m) => ({ id: m.id, name: m.name })),
-        };
-      }),
-  );
+  const toCover = days
+    .filter((day) => day.service && day.service.assigned.length < day.service.needed)
+    .map((day) => {
+      const shift = day.service;
+      const rows = shift.status ?? [];
+      const placed = new Set(shift.assigned);
+      const named = (r) => ({ id: r.staff_id, name: nameOf.get(r.staff_id) ?? '—', placed: placed.has(r.staff_id) });
+      return {
+        day,
+        shift,
+        busy: rows.filter((r) => r.busy).map((r) => ({ ...named(r), row: r })),
+        noClass: rows.filter((r) => !r.busy && !r.on_campus).map(named),
+        // people whose calendar hasn't been read for this day yet
+        unknown: staff.filter((m) => !rows.some((r) => r.staff_id === m.id)).map((m) => ({ id: m.id, name: m.name })),
+      };
+    });
 
   return (
     <Dialog title={t('Unavailable people')} onClose={onClose} wide>
@@ -32,7 +31,7 @@ export default function Unavailable({ days, staff, onClose }) {
       ) : (
         <>
           {toCover.map(({ day, shift, busy, noClass, unknown }) => (
-            <section key={shift.id} className="unavail-shift">
+            <section key={day.key} className="unavail-shift">
               <div className="unavail-head">
                 <strong>{formatDay(day.date, lang)}</strong>
                 <span>{shift.time}</span>

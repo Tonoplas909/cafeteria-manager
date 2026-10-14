@@ -56,11 +56,22 @@ export default {
   "Who's on the counter": 'Qui est au comptoir',
   'Shifts open for cover, and the people whose calendars are free.':
     'Les créneaux à pourvoir, et les personnes dont l’agenda est libre.',
-  'Add shift': 'Ajouter un créneau',
-  'Edit shift': 'Modifier le créneau',
-  'Delete shift': 'Supprimer le créneau',
-  'Delete this shift?': 'Supprimer ce créneau ?',
-  'No shifts yet. Add the first one.': 'Aucun créneau pour le moment. Ajoutez le premier.',
+  'Usual hours': 'Horaires habituels',
+  'No opening hours yet. Set the usual hours first.':
+    "Aucun horaire d'ouverture pour l'instant. Commencez par définir les horaires habituels.",
+  'One shift a day at most. These hours apply to every week; a single date can still be closed or changed from its card.':
+    'Un créneau par jour au maximum. Ces horaires valent pour toutes les semaines ; une date précise peut toujours être fermée ou modifiée depuis sa carte.',
+  '{day}: the shift must end after it starts.': '{day} : le créneau doit se terminer après son début.',
+  'Edit this day': 'Modifier ce jour',
+  'Special hours': 'Horaire exceptionnel',
+  Closed: 'Fermé',
+  'Closed that day': 'Fermé ce jour-là',
+  'Reopen with the usual hours': "Rouvrir avec l'horaire habituel",
+  'Back to the usual hours': "Revenir à l'horaire habituel",
+  'Changes apply to this date only. The usual hours are set with “Usual hours”.':
+    'Les changements ne concernent que cette date. Les horaires de chaque semaine se règlent dans « Horaires habituels ».',
+  '{n} people are placed on this day. Close it anyway? They are placed again if the day reopens.':
+    '{n} personne(s) sont placées ce jour-là. Fermer quand même ? Elles retrouveront leur place si le jour rouvre.',
   'No shifts have been planned yet.': "Aucun créneau n'a encore été planifié.",
   '{n} open': '{n} à pourvoir',
   Full: 'Complet',
@@ -87,7 +98,6 @@ export default {
   'Nobody is free': "Personne n'est libre",
   'Choose up to {n} people for this shift.': "Choisissez jusqu'à {n} personnes pour ce créneau.",
   'The shift must end after it starts.': 'Le créneau doit se terminer après son début.',
-  Day: 'Jour',
   Starts: 'Début',
   Ends: 'Fin',
   'People needed': 'Personnes nécessaires',

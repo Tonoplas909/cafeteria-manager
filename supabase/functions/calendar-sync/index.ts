@@ -5,11 +5,12 @@
 import ICAL from 'npm:ical.js@2.1.0';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { buildFeed, busyIntervals, overlapDetails, overlaps } from './core.js';
-import { dateKey, occurrenceOn, parseDateKey, shiftOccurrence, todayIn } from './core.js';
+import { dateKey, occurrenceOn, parseDateKey, servicesFrom, todayIn, HORIZON_DAYS } from './core.js';
 import { localDayBounds } from './core.js';
 
 const TZ = 'Europe/Paris';
-const WINDOW_MS = 8 * 24 * 3600 * 1000;
+// Calendars are read over the days the schedule shows, plus a day of margin.
+const WINDOW_MS = (HORIZON_DAYS + 1) * 24 * 3600 * 1000;
 const STALE_MS = 10 * 60 * 1000;
 const MAX_ICS_CHARS = 5_000_000;
 
@@ -58,6 +59,7 @@ const newToken = () => {
   return btoa(String.fromCharCode(...b)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 };
 
+const ISO_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const DAYS_FR: Record<string, string> = {
   Monday: 'lundi', Tuesday: 'mardi', Wednesday: 'mercredi', Thursday: 'jeudi',
   Friday: 'vendredi', Saturday: 'samedi', Sunday: 'dimanche',
@@ -79,40 +81,46 @@ async function serveFeed(req: Request) {
   const now = new Date();
   const todayStr = dateKey(todayIn(TZ, now));
 
-  // Shifts this member is placed on, from today on (assignments are per date).
+  // Days this member is placed on, from today on. The service of each date is its
+  // exception if it has one, else its weekday's usual hours.
   const { data: mine } = await db
-    .from('shift_assignments').select('shift_id, date').eq('staff_id', row.staff_id).gte('date', todayStr);
-  const shiftIds = [...new Set((mine ?? []).map((m) => m.shift_id as number))];
-  const { data: shifts } = shiftIds.length
-    ? await db.from('shifts').select('id, day, time_label').in('id', shiftIds)
-    : { data: [] as { id: number; day: string; time_label: string }[] };
-
-  // Colleagues on the same shift and date, for the event description.
+    .from('service_assignments').select('date').eq('staff_id', row.staff_id).gte('date', todayStr).order('date');
+  const dates = (mine ?? []).map((m) => m.date as string);
+  const last = dates[dates.length - 1];
+  const services = new Map<string, { time: string; weekday: number }>();
   const colleagues = new Map<string, string[]>();
-  if (shiftIds.length) {
-    const { data: all } = await db
-      .from('shift_assignments').select('shift_id, date, staff_id').in('shift_id', shiftIds).gte('date', todayStr);
+  if (dates.length) {
+    const [{ data: weekly }, { data: exceptions }, { data: all }] = await Promise.all([
+      db.from('opening_hours').select('weekday, time_label, needed'),
+      db.from('service_days').select('date, closed, time_label, needed').gte('date', todayStr).lte('date', last),
+      db.from('service_assignments').select('date, staff_id').in('date', dates),
+    ]);
+    const span = Math.round((Date.parse(last) - Date.parse(todayStr)) / 86_400_000) + 1;
+    for (const sv of servicesFrom(weekly ?? [], exceptions ?? [], parseDateKey(todayStr), span)) {
+      if (!sv.closed) services.set(sv.key, { time: sv.time, weekday: sv.weekday });
+    }
+    // Colleagues on the same date, for the event description.
     const { data: people } = await db
       .from('staff').select('id, name').in('id', [...new Set((all ?? []).map((a) => a.staff_id as number))]);
     const nameOf = new Map((people ?? []).map((p) => [p.id as number, p.name as string]));
     for (const a of all ?? []) {
       if (a.staff_id === row.staff_id) continue;
-      const k = `${a.shift_id}|${a.date}`;
-      colleagues.set(k, [...(colleagues.get(k) ?? []), nameOf.get(a.staff_id) ?? '']);
+      colleagues.set(a.date, [...(colleagues.get(a.date) ?? []), nameOf.get(a.staff_id) ?? '']);
     }
   }
 
   const events = [];
-  for (const m of mine ?? []) {
-    const s = (shifts ?? []).find((x) => x.id === m.shift_id);
-    if (!s) continue;
-    const occ = occurrenceOn(parseDateKey(m.date), s.time_label, TZ);
+  for (const date of dates) {
+    const sv = services.get(date);
+    if (!sv) continue; // closed that day, or no hours any more
+    const occ = occurrenceOn(parseDateKey(date), sv.time, TZ);
     if (!occ || occ.end <= now.getTime()) continue; // already over
-    const others = (colleagues.get(`${m.shift_id}|${m.date}`) ?? []).filter(Boolean);
-    const when = fr ? `Créneau du ${DAYS_FR[s.day] ?? s.day} ${s.time_label}.` : `${s.day} shift ${s.time_label}.`;
+    const others = (colleagues.get(date) ?? []).filter(Boolean);
+    const dayName = ISO_DAYS[sv.weekday - 1];
+    const when = fr ? `Créneau du ${DAYS_FR[dayName] ?? dayName} ${sv.time}.` : `${dayName} shift ${sv.time}.`;
     const withText = others.length ? `\n${fr ? 'Avec' : 'With'} : ${others.join(', ')}` : '';
     events.push({
-      uid: `shift-${s.id}-${String(m.date).replace(/-/g, '')}@campus-cafe`,
+      uid: `service-${date.replace(/-/g, '')}@campus-cafe`,
       start: occ.start,
       end: occ.end,
       summary: fr ? "Service à la Cafet'MIAGE" : "Cafet'MIAGE shift",
@@ -156,20 +164,27 @@ Deno.serve(async (req) => {
   // Recompute "busy" shifts for these members from all of their calendars.
   async function syncStaff(staffIds: number[]) {
     const failed: number[] = [];
-    const { data: shifts } = await db.from('shifts').select('id, day, time_label');
     const now = new Date();
     // Read events from midnight today so classes earlier today still count as "on campus".
     const from = localDayBounds(now.getTime(), TZ)[0];
-    const occurrences = (shifts ?? [])
-      .map((s) => ({ id: s.id as number, occ: shiftOccurrence(s.day, s.time_label, TZ, now) }))
+    // The services the schedule shows: one a day at most, identified by its date.
+    const today = todayIn(TZ, now);
+    const end = new Date(Date.UTC(today.y, today.m - 1, today.d + HORIZON_DAYS - 1));
+    const [{ data: weekly }, { data: exceptions }] = await Promise.all([
+      db.from('opening_hours').select('weekday, time_label, needed'),
+      db.from('service_days').select('date, closed, time_label, needed')
+        .gte('date', dateKey(today)).lte('date', end.toISOString().slice(0, 10)),
+    ]);
+    const occurrences = servicesFrom(weekly ?? [], exceptions ?? [], today, HORIZON_DAYS)
+      .filter((sv) => !sv.closed)
+      .map((sv) => ({ date: sv.key, occ: occurrenceOn(sv.date, sv.time, TZ) }))
       .filter((x) => x.occ);
 
     for (const staffId of staffIds) {
       const { data: cals } = await db.from('calendars').select('id').eq('staff_id', staffId);
       const ids = (cals ?? []).map((c) => c.id);
       if (!ids.length) {
-        await db.from('shift_busy').delete().eq('staff_id', staffId);
-        await db.from('shift_status').delete().eq('staff_id', staffId);
+        await db.from('service_status').delete().eq('staff_id', staffId);
         continue;
       }
       const { data: secrets } = await db.from('calendar_secrets').select('calendar_id, ical_url').in('calendar_id', ids);
@@ -178,13 +193,13 @@ Deno.serve(async (req) => {
         for (const s of secrets ?? []) {
           intervals.push(...busyIntervals(ICAL, await fetchIcs(s.ical_url), from, now.getTime() + WINDOW_MS));
         }
-        // Per shift: busy during it? and are there any events that day at all (on campus)?
+        // Per service: busy during it? and are there any events that day at all (on campus)?
         // Someone with no events all day is not "free": no point coming in just for the shift.
         const status = occurrences.map((x) => {
           const [dayStart, dayEnd] = localDayBounds(x.occ!.start, TZ);
           const d = overlapDetails(intervals, x.occ!.start, x.occ!.end);
           return {
-            shift_id: x.id,
+            date: x.date,
             staff_id: staffId,
             busy: d.minutes > 0,
             on_campus: overlaps(intervals, dayStart, dayEnd),
@@ -194,12 +209,8 @@ Deno.serve(async (req) => {
             busy_until: d.until === null ? null : new Date(d.until).toISOString(),
           };
         });
-        await db.from('shift_status').delete().eq('staff_id', staffId);
-        if (status.length) await db.from('shift_status').insert(status);
-        // shift_busy is kept up to date for the previous version of the app.
-        const busy = status.filter((x) => x.busy).map((x) => ({ shift_id: x.shift_id, staff_id: staffId }));
-        await db.from('shift_busy').delete().eq('staff_id', staffId);
-        if (busy.length) await db.from('shift_busy').insert(busy);
+        await db.from('service_status').delete().eq('staff_id', staffId);
+        if (status.length) await db.from('service_status').insert(status);
         await db.from('calendars').update({ last_sync: now.toISOString() }).in('id', ids);
       } catch {
         failed.push(staffId); // keep the previous result if a feed is unreachable
