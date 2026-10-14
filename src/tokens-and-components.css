@@ -1,42 +1,42 @@
 :root {
-  --color-bg: #f5ead8;
-  --color-surface: #ebddc5;
-  --color-text: #201e1d;
-  --color-accent: #c67139;
-  --color-accent-2: #7a8a5e;
-  --color-divider: color-mix(in srgb, #201e1d 16%, transparent);
+  --color-bg: #e8eef3;
+  --color-surface: #d3dde6;
+  --color-text: #0e1a2b;
+  --color-accent: #1e3350;
+  --color-accent-2: #3bb5cb;
+  --color-divider: color-mix(in srgb, #0E1A2B 16%, transparent);
 
   /* Tonal ramps — generated in OKLCH on one shared lightness scale, so the
      same step of any role matches the others in visual value. */
-  --color-neutral-100: #f9f4ed;
-  --color-neutral-200: #eee7db;
-  --color-neutral-300: #dcd3c4;
-  --color-neutral-400: #c0b6a5;
-  --color-neutral-500: #a19786;
-  --color-neutral-600: #82796a;
-  --color-neutral-700: #645c50;
-  --color-neutral-800: #474238;
-  --color-neutral-900: #2e2b25;
+  --color-neutral-100: #f4f7fa;
+  --color-neutral-200: #e8eef3;
+  --color-neutral-300: #d3dde6;
+  --color-neutral-400: #b3c1ce;
+  --color-neutral-500: #8797a8;
+  --color-neutral-600: #66788c;
+  --color-neutral-700: #4a5b70;
+  --color-neutral-800: #2f3f55;
+  --color-neutral-900: #0e1a2b;
 
-  --color-accent-100: #fff2eb;
-  --color-accent-200: #ffe1d0;
-  --color-accent-300: #ffc6a5;
-  --color-accent-400: #f6a06b;
-  --color-accent-500: #d67f48;
-  --color-accent-600: #b2622d;
-  --color-accent-700: #8c491a;
-  --color-accent-800: #643312;
-  --color-accent-900: #402310;
+  --color-accent-100: #e9ebee;
+  --color-accent-200: #c7ccd3;
+  --color-accent-300: #8f99a8;
+  --color-accent-400: #56667c;
+  --color-accent-500: #1e3350;
+  --color-accent-600: #1a2b44;
+  --color-accent-700: #142134;
+  --color-accent-800: #0e1724;
+  --color-accent-900: #080e16;
 
-  --color-accent-2-100: #f0fae1;
-  --color-accent-2-200: #e1eecc;
-  --color-accent-2-300: #ccdbb2;
-  --color-accent-2-400: #aebf92;
-  --color-accent-2-500: #8fa073;
-  --color-accent-2-600: #728157;
-  --color-accent-2-700: #56633f;
-  --color-accent-2-800: #3d472b;
-  --color-accent-2-900: #272e1b;
+  --color-accent-2-100: #ebf8fa;
+  --color-accent-2-200: #ceedf2;
+  --color-accent-2-300: #9ddae5;
+  --color-accent-2-400: #6cc8d8;
+  --color-accent-2-500: #3bb5cb;
+  --color-accent-2-600: #329aad;
+  --color-accent-2-700: #267684;
+  --color-accent-2-800: #1b515b;
+  --color-accent-2-900: #113339;
 
   --font-heading: "Caprasimo", system-ui, sans-serif;
   --font-heading-weight: 400;
@@ -55,9 +55,9 @@
 
   /* Elevation — derived from the ground: soft ink-tinted shadows on a
      light theme, a hairline edge + ambient darkness on a dark one. */
-  --shadow-sm: 0 1px 2px color-mix(in srgb, #2e2b25 14%, transparent);
-  --shadow-md: 0 3px 10px color-mix(in srgb, #2e2b25 16%, transparent);
-  --shadow-lg: 0 12px 32px color-mix(in srgb, #2e2b25 22%, transparent);
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #0E1A2B 14%, transparent);
+  --shadow-md: 0 3px 10px color-mix(in srgb, #0E1A2B 16%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, #0E1A2B 22%, transparent);
 }
 
 body {
