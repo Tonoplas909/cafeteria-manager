@@ -1,6 +1,7 @@
 import Dialog from '../Dialog.jsx';
 import { useT } from '../i18n.jsx';
 import { formatDay, formatTime } from '../dates.js';
+import Michel from '../Michel.jsx';
 
 // For every shift that still needs people: who can't make it and why. Purely informational.
 export default function Unavailable({ days, staff, onClose }) {
@@ -28,7 +29,10 @@ export default function Unavailable({ days, staff, onClose }) {
   return (
     <Dialog title={t('Unavailable people')} onClose={onClose} wide>
       {toCover.length === 0 ? (
-        <p style={{ margin: 0 }}>{t('Every shift is covered: nothing to fill.')}</p>
+        <>
+          <Michel pose="cheer" className="michel-state" />
+          <p style={{ margin: 0, textAlign: 'center' }}>{t('Every shift is covered: nothing to fill.')}</p>
+        </>
       ) : (
         <>
           {toCover.map(({ day, shift, busy, noClass, unknown }) => (

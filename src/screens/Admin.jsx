@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Dialog from '../Dialog.jsx';
 import { PlusIcon } from '../icons.jsx';
 import { useT } from '../i18n.jsx';
+import Michel from '../Michel.jsx';
 
 const TABS = [
   ['staff', 'Staff'],
@@ -53,7 +54,8 @@ export default function Admin({ staff, inventory, calendars, actions, me }) {
 
   return (
     <div className="screen-inner">
-      <div>
+      <div className="page-intro">
+        <Michel pose="boss" className="michel-head" />
         <div className="eyebrow">{t('Setup')}</div>
         <h1 className="page-title">{t('Team and menu')}</h1>
         <p className="page-lede">

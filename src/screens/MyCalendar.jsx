@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { useT } from '../i18n.jsx';
+import Michel from '../Michel.jsx';
 
 // "My shifts in my calendar": a personal subscription link that lists the member's next shifts.
 function ShiftsFeed() {
@@ -89,7 +90,8 @@ export default function MyCalendar({ mine, actions }) {
 
   return (
     <div className="screen-inner">
-      <div>
+      <div className="page-intro">
+        <Michel pose="chill" className="michel-head michel-wide" />
         <div className="eyebrow">{t('Your availability')}</div>
         <h1 className="page-title">{t('My calendar')}</h1>
         <p className="page-lede">

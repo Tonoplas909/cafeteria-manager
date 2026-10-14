@@ -4,6 +4,7 @@ import { useT } from '../i18n.jsx';
 import { planImport } from '../importStock.js';
 import { buildShoppingList, shoppingListText } from '../shoppingList.js';
 import { DRIVE_SITES } from '../driveSites.js';
+import Michel from '../Michel.jsx';
 
 // Empty field = no target.
 const readTarget = (value) => (value === '' || value == null ? null : Math.max(0, Number(value)));
@@ -60,7 +61,8 @@ export default function Inventory({ inventory, adjustStock, importProducts, setT
   return (
     <div className="screen-inner">
       <div className="page-head">
-        <div>
+        <div className="page-intro">
+          <Michel pose="chef" className="michel-head michel-wide" />
           <div className="eyebrow">{t('Stock room')}</div>
           <h1 className="page-title">{t("What's on the shelf")}</h1>
           <p className="page-lede">{t('Levels against the minimum, and what each item used this week.')}</p>
@@ -231,6 +233,8 @@ export default function Inventory({ inventory, adjustStock, importProducts, setT
       {shopping && (
         <Dialog title={t('Shopping list')} wide onClose={closeShopping}>
           {shoppingList.items.length === 0 ? (
+            <>
+            {hasTargets && <Michel pose="chill" className="michel-state" />}
             <p className="text-muted" style={{ margin: 0 }}>
               {hasTargets
                 ? t('Nothing to buy: every item is at or above its target.')
@@ -238,6 +242,7 @@ export default function Inventory({ inventory, adjustStock, importProducts, setT
                   ? t('No targets yet. Use “Set targets” to choose how much of each item to keep.')
                   : t('No targets yet. Ask an admin to set them.')}
             </p>
+            </>
           ) : (
             <>
               <ul className="shopping-list">

@@ -4,6 +4,7 @@ import { WEEKDAYS } from '../api.js';
 import { useT } from '../i18n.jsx';
 import { formatDay, todayKey, parseDateKey, dateKey } from '../dates.js';
 import Unavailable from './Unavailable.jsx';
+import Michel from '../Michel.jsx';
 
 // "12:15–13:45" -> ["12:15", "13:45"]
 const splitTime = (label) => {
@@ -43,7 +44,8 @@ export default function Schedule({ days, range, page, loadedPage, onPage, weekly
   return (
     <div className="screen-inner">
       <div className="page-head">
-        <div>
+        <div className="page-intro">
+          <Michel pose="megaphone" className="michel-head" />
           <div className="eyebrow">{t('Coming up')}</div>
           <h1 className="page-title">{t("Who's on the counter")}</h1>
           <p className="page-lede">{t('Shifts open for cover, and the people whose calendars are free.')}</p>
@@ -411,7 +413,8 @@ function DayDialog({ day, me, isAdmin, nameOf, onClose, onAssign, onEdit, onReop
     <Dialog title={formatDay(day.date, lang)} onClose={onClose}>
       {day.closed ? (
         <>
-          <p style={{ margin: 0 }}>{t('Closed that day.')}</p>
+          <Michel pose="chill" className="michel-state" />
+          <p style={{ margin: 0, textAlign: 'center' }}>{t('Closed that day.')}</p>
           {isAdmin && (
             <div className="shift-actions">
               <button className="btn btn-secondary" onClick={() => onReopen(day)}>{t('Reopen with the usual hours')}</button>
@@ -421,7 +424,8 @@ function DayDialog({ day, me, isAdmin, nameOf, onClose, onAssign, onEdit, onReop
         </>
       ) : !s ? (
         <>
-          <p style={{ margin: 0 }}>{t('No service planned that day.')}</p>
+          <Michel pose="chill" className="michel-state" />
+          <p style={{ margin: 0, textAlign: 'center' }}>{t('No service planned that day.')}</p>
           {isAdmin && (
             <div className="shift-actions">
               <button className="btn btn-secondary" onClick={() => onEdit(day)}>{t('Open this day')}</button>
