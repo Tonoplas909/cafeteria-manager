@@ -11,7 +11,7 @@ function Shell({ title, children }) {
         <div className="login-top">
           <div className="brand" style={{ padding: 0 }}>
             <img className="brand-logo" src="/brand/miage-logo.png" alt="" />
-            <div className="brand-name">Campus Café</div>
+            <div className="brand-name">Cafet'MIAGE</div>
           </div>
           <LangSwitch />
         </div>

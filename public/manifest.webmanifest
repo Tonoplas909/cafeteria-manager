@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "Campus Café",
-  "short_name": "Campus Café",
-  "description": "Planning, stock et équipe du Campus Café.",
+  "name": "Cafet'MIAGE",
+  "short_name": "Cafet'MIAGE",
+  "description": "Planning, stock et équipe du Cafet'MIAGE.",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",

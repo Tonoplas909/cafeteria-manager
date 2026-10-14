@@ -135,7 +135,7 @@ function Signed({ session }) {
       <nav className="sidebar" aria-label="Main">
         <div className="brand">
           <img className="brand-logo" src="/brand/miage-logo.png" alt="" />
-          <div className="brand-name">Campus Café</div>
+          <div className="brand-name">Cafet'MIAGE</div>
         </div>
         <div className="side-nav">
           {NAV.filter(([id]) => visible(id)).map(([id, label, Icon]) => (
