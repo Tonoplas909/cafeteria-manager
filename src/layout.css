@@ -3,24 +3,28 @@
 .app { display: flex; height: 100vh; background: var(--color-bg); color: var(--color-text); }
 
 .sidebar {
-  width: 232px; flex-shrink: 0; background: var(--color-surface);
+  width: 232px; flex-shrink: 0; background: var(--color-ink); color: #fff;
   padding: var(--space-6) var(--space-4);
   display: flex; flex-direction: column; gap: var(--space-8);
 }
 .brand { display: flex; align-items: center; gap: var(--space-3); padding: 0 var(--space-2); }
-.brand-logo { width: 44px; height: 44px; flex: none; object-fit: contain; }
+/* The logo's black outline vanishes on the ink sidebar, so it sits on a white tile. */
+.brand-logo {
+  width: 48px; height: 48px; flex: none; object-fit: contain;
+  padding: 4px; background: #fff; border-radius: 12px;
+}
 .brand-name {
   font-family: var(--font-heading); font-weight: var(--font-heading-weight);
   font-size: 24px; line-height: 1; text-transform: uppercase; letter-spacing: 0.01em;
 }
 .side-nav { display: flex; flex-direction: column; gap: var(--space-2); }
 .nav-item {
-  background: transparent; color: var(--color-text); border: none; border-radius: 999px;
+  background: transparent; color: var(--color-neutral-200); border: none; border-radius: 999px;
   padding: var(--space-3) var(--space-4); display: flex; align-items: center; gap: var(--space-3);
   font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; text-align: left;
 }
-.nav-item:hover { filter: brightness(0.96); }
-.nav-item[aria-current='page'] { background: var(--color-accent); color: var(--color-bg); }
+.nav-item:hover { background: color-mix(in srgb, #fff 8%, transparent); }
+.nav-item[aria-current='page'] { background: var(--color-accent-2); color: var(--color-ink); }
 
 .main { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
 .screen { flex: 1; overflow: auto; padding: var(--space-8); }
@@ -129,7 +133,7 @@ input[type='checkbox']:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .notice {
   flex-direction: row; align-items: center; justify-content: space-between; gap: var(--space-4);
-  margin-bottom: var(--space-6); background: var(--color-accent-100); color: var(--color-accent-800);
+  margin-bottom: var(--space-6); background: var(--color-danger-100); color: var(--color-danger);
 }
 
 /* Login */
@@ -138,6 +142,18 @@ input[type='checkbox']:disabled { opacity: 0.45; cursor: not-allowed; }
 .sidebar-foot { margin-top: auto; padding: 0 var(--space-2); display: flex; flex-direction: column; gap: var(--space-2); font-size: 13px; }
 .sidebar-foot .who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-neutral-700); }
 @media (max-width: 800px) { .sidebar-foot { margin: 0 0 0 auto; flex-direction: row; align-items: center; } .sidebar-foot .who { display: none; } }
+/* On a desktop the account block sits on the dark sidebar; on a phone it moves to the light page. */
+@media (min-width: 801px) {
+  .sidebar-foot .who { color: var(--color-neutral-400); }
+  .sidebar-foot .btn-ghost { color: var(--color-accent-2-300); }
+  .sidebar-foot .btn-ghost:hover { background: color-mix(in srgb, #fff 8%, transparent); }
+  .sidebar-foot .btn-secondary { color: #fff; border-color: color-mix(in srgb, #fff 30%, transparent); }
+  .sidebar-foot .btn-secondary:hover { background: color-mix(in srgb, #fff 8%, transparent); }
+  .sidebar-foot .seg { border-color: color-mix(in srgb, #fff 30%, transparent); }
+  .sidebar-foot .lang-opt { color: #fff; }
+  .sidebar-foot .lang-opt + .lang-opt { border-left-color: color-mix(in srgb, #fff 30%, transparent); }
+  .sidebar-foot .lang-opt[aria-pressed='true'] { background: var(--color-accent-2); color: var(--color-ink); }
+}
 .login-links { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-2); }
 
 /* Language switch, schedule details, steps */

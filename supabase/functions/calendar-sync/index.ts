@@ -115,12 +115,12 @@ async function serveFeed(req: Request) {
       uid: `shift-${s.id}-${String(m.date).replace(/-/g, '')}@campus-cafe`,
       start: occ.start,
       end: occ.end,
-      summary: fr ? 'Service au Campus Café' : 'Campus Café shift',
+      summary: fr ? "Service à la Cafet'MIAGE" : "Cafet'MIAGE shift",
       description: when + withText,
     });
   }
 
-  return new Response(buildFeed({ name: 'Campus Café', events, now }), {
+  return new Response(buildFeed({ name: "Cafet'MIAGE", events, now }), {
     headers: {
       ...cors,
       'Content-Type': 'text/calendar; charset=utf-8',

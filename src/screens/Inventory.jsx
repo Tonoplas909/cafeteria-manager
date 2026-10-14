@@ -87,7 +87,7 @@ export default function Inventory({ inventory, adjustStock, importProducts, setT
         </div>
         <div className="card elev-sm stat">
           <div className="label-caps">{t('Running low')}</div>
-          <div className="stat-value" style={{ color: 'var(--color-accent-700)' }}>{lowStockCount}</div>
+          <div className="stat-value" style={{ color: 'var(--color-warn-800)' }}>{lowStockCount}</div>
         </div>
         <div className="card elev-sm stat">
           <div className="label-caps">{t('Used this week')}</div>
@@ -126,7 +126,7 @@ export default function Inventory({ inventory, adjustStock, importProducts, setT
                         <span
                           style={{
                             width: `${pct}%`,
-                            background: low ? 'var(--color-accent)' : 'var(--color-accent-2)',
+                            background: low ? 'var(--color-warn)' : 'var(--color-accent-2)',
                           }}
                         />
                       </div>
@@ -136,7 +136,7 @@ export default function Inventory({ inventory, adjustStock, importProducts, setT
                     <td data-label={t('Target')}>{item.targetLevel ?? '—'}</td>
                     <td data-label={t('This week')}>{item.weeklyUsage}</td>
                     <td>
-                      <span className={low ? 'tag tag-accent' : 'tag tag-accent-2'}>{low ? t('Low') : t('OK')}</span>
+                      <span className={low ? 'tag tag-warn' : 'tag tag-accent-2'}>{low ? t('Low') : t('OK')}</span>
                     </td>
                     <td className="t-right">
                       {canEdit && (
@@ -280,7 +280,7 @@ export default function Inventory({ inventory, adjustStock, importProducts, setT
                   {copied ? t('Copied') : t('Copy list')}
                 </button>
               </div>
-              {copyError && <p style={{ margin: 0, color: 'var(--color-accent-700)' }}>{copyError}</p>}
+              {copyError && <p style={{ margin: 0, color: 'var(--color-danger)' }}>{copyError}</p>}
             </>
           )}
         </Dialog>
@@ -308,7 +308,7 @@ export default function Inventory({ inventory, adjustStock, importProducts, setT
               required
             />
           </div>
-          {importError && <p style={{ margin: 0, color: 'var(--color-accent-700)' }}>{t(importError)}</p>}
+          {importError && <p style={{ margin: 0, color: 'var(--color-danger)' }}>{t(importError)}</p>}
           {plan && (
             <div className="import-summary">
               <div className="import-stats">

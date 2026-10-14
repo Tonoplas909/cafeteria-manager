@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from './api.js';
 import { useT, LangSwitch } from './i18n.jsx';
+import logoUrl from './assets/miage-logo.png';
 
 const redirectTo = () => window.location.origin + window.location.pathname;
 
@@ -10,7 +11,7 @@ function Shell({ title, children }) {
       <div className="card elev-md login-card">
         <div className="login-top">
           <div className="brand" style={{ padding: 0 }}>
-            <img className="brand-logo" src="/brand/miage-logo.png" alt="" />
+            <img className="brand-logo" src={logoUrl} alt="" />
             <div className="brand-name">Cafet'MIAGE</div>
           </div>
           <LangSwitch />
@@ -30,7 +31,7 @@ const Field = ({ id, label, ...props }) => (
 );
 
 const ErrorText = ({ children }) =>
-  children ? <div role="alert" style={{ color: 'var(--color-accent-700)', fontSize: 13 }}>{children}</div> : null;
+  children ? <div role="alert" style={{ color: 'var(--color-danger)', fontSize: 13 }}>{children}</div> : null;
 
 // Email + password sign-in. Accounts are created by an admin (invitation link);
 // forgotten passwords are reset through an emailed link.

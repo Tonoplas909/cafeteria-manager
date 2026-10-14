@@ -1,10 +1,19 @@
 :root {
   --color-bg: #e8eef3;
-  --color-surface: #d3dde6;
+  --color-surface: #ffffff;
   --color-text: #0e1a2b;
   --color-accent: #1e3350;
   --color-accent-2: #3bb5cb;
   --color-divider: color-mix(in srgb, #0E1A2B 16%, transparent);
+
+  /* MIAGE logo roles: ink for the app frame, the beak's amber for things that
+     need attention (low stock, open shifts), and a red kept for errors. */
+  --color-ink: #0e1a2b;
+  --color-warn: #f4a43a;
+  --color-warn-100: #fdedd5;
+  --color-warn-800: #7a4a0b;
+  --color-danger: #b42318;
+  --color-danger-100: #fdecea;
 
   /* Tonal ramps — generated in OKLCH on one shared lightness scale, so the
      same step of any role matches the others in visual value. */
@@ -200,6 +209,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 }
 .tag-accent { background: var(--color-accent-100); color: var(--color-accent-800); }
 .tag-accent-2 { background: var(--color-accent-2-100); color: var(--color-accent-2-800); }
+.tag-warn { background: var(--color-warn-100); color: var(--color-warn-800); }
 .tag-neutral { background: var(--color-neutral-100); color: var(--color-neutral-800); }
 .tag-outline { border: 1px solid var(--color-accent); color: var(--color-accent); }
 
@@ -242,7 +252,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 }
 .dialog-title {
   font-family: var(--font-heading); font-weight: var(--font-heading-weight);
-  font-size: 20px;
+  font-size: 24px; text-transform: uppercase; letter-spacing: 0.01em;
 }
 .dialog-body { font-size: 14px; opacity: 0.85; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-2); }
