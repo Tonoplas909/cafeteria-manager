@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { supabase } from './api.js';
-import { CoffeeIcon } from './icons.jsx';
 import { useT, LangSwitch } from './i18n.jsx';
 
 const redirectTo = () => window.location.origin + window.location.pathname;
@@ -11,7 +10,7 @@ function Shell({ title, children }) {
       <div className="card elev-md login-card">
         <div className="login-top">
           <div className="brand" style={{ padding: 0 }}>
-            <div className="brand-mark"><CoffeeIcon /></div>
+            <img className="brand-logo" src="/brand/miage-logo.png" alt="" />
             <div className="brand-name">Campus Café</div>
           </div>
           <LangSwitch />

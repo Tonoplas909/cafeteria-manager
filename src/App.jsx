@@ -4,7 +4,7 @@ import Login, { SetPassword } from './Login.jsx';
 import Dialog from './Dialog.jsx';
 import InstallApp from './InstallApp.jsx';
 import { useT, LangSwitch } from './i18n.jsx';
-import { CoffeeIcon, CalendarIcon, CalendarCheckIcon, PackageIcon, SlidersIcon } from './icons.jsx';
+import { CalendarIcon, CalendarCheckIcon, PackageIcon, SlidersIcon } from './icons.jsx';
 import Schedule from './screens/Schedule.jsx';
 import Inventory from './screens/Inventory.jsx';
 import MyCalendar from './screens/MyCalendar.jsx';
@@ -134,7 +134,7 @@ function Signed({ session }) {
     <div className="app">
       <nav className="sidebar" aria-label="Main">
         <div className="brand">
-          <div className="brand-mark"><CoffeeIcon /></div>
+          <img className="brand-logo" src="/brand/miage-logo.png" alt="" />
           <div className="brand-name">Campus Café</div>
         </div>
         <div className="side-nav">
