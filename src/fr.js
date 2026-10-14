@@ -57,6 +57,13 @@ export default {
   'Shifts open for cover, and the people whose calendars are free.':
     'Les créneaux à pourvoir, et les personnes dont l’agenda est libre.',
   'Usual hours': 'Horaires habituels',
+  'No service': 'Pas de service',
+  'You are on it': 'Vous y êtes',
+  Me: 'Moi',
+  'People missing': 'Il manque du monde',
+  'Closed that day.': 'Fermé ce jour-là.',
+  'No service planned that day.': 'Aucun service prévu ce jour-là.',
+  'Open this day': 'Ouvrir ce jour',
   'No opening hours yet. Set the usual hours first.':
     "Aucun horaire d'ouverture pour l'instant. Commencez par définir les horaires habituels.",
   'One shift a day at most. These hours apply to every week; a single date can still be closed or changed from its card.':
