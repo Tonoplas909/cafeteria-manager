@@ -18,7 +18,7 @@ const NAV = [
   ['admin', 'Admin', SlidersIcon, true], // admin only
 ];
 
-const EMPTY = { staff: [], inventory: [], calendars: [], days: [] };
+const EMPTY = { staff: [], inventory: [], calendars: [], days: [], weekly: [], exceptions: [] };
 
 export default function App() {
   // undefined = still checking, null = signed out
@@ -98,14 +98,12 @@ function Signed({ session }) {
     adjustStock: run(api.adjustStock),
     importProducts: run(api.importProducts),
     setTargets: run(api.setTargets),
-    // shifts
-    addShift: run(api.addShift),
-    updateShift: run(api.updateShift),
-    deleteShift: run(api.deleteShift),
-    assignShift: run(api.assignShift),
-    toggleSelf: run((shiftId, date, joined) =>
-      joined ? api.leaveShift(shiftId, date, me.id) : api.joinShift(shiftId, date, me.id),
-    ),
+    // services (one a day, identified by its date)
+    setOpeningHours: run(api.setOpeningHours),
+    setServiceDay: run(api.setServiceDay),
+    clearServiceDay: run(api.clearServiceDay),
+    assignService: run(api.assignService),
+    toggleSelf: run((date, joined) => (joined ? api.leaveService(date, me.id) : api.joinService(date, me.id))),
     // calendars
     connectCalendar: run(api.connectCalendar),
     disconnectCalendar: run(api.disconnectCalendar),
@@ -177,7 +175,7 @@ function Signed({ session }) {
           )}
           {status === 'loading' && <p className="text-muted">{t('Loading…')}</p>}
           {status === 'ready' && screen === 'schedule' && (
-            <Schedule days={data.days} staff={data.staff} me={me} isAdmin={isAdmin} actions={actions} />
+            <Schedule days={data.days} weekly={data.weekly} staff={data.staff} me={me} isAdmin={isAdmin} actions={actions} />
           )}
           {status === 'ready' && screen === 'inventory' && (
             <Inventory inventory={data.inventory} adjustStock={actions.adjustStock} importProducts={actions.importProducts} setTargets={actions.setTargets} canEdit={isAdmin} />
