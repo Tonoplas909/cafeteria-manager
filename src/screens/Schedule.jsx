@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Dialog from '../Dialog.jsx';
 import { WEEKDAYS } from '../api.js';
 import { useT } from '../i18n.jsx';
-import { formatDay } from '../dates.js';
+import { formatDay, todayKey, parseDateKey, dateKey } from '../dates.js';
 import Unavailable from './Unavailable.jsx';
 
 // "12:15–13:45" -> ["12:15", "13:45"]
@@ -21,12 +21,14 @@ export default function Schedule({ days, weekly, staff, me, isAdmin, actions }) 
   const [editingWeek, setEditingWeek] = useState(false);
   const [formError, setFormError] = useState(null);
   const [showUnavailable, setShowUnavailable] = useState(false);
+  const [selected, setSelected] = useState(null); // date key of the day shown in detail
 
   const nameOf = new Map(staff.map((m) => [m.id, m.name]));
   const usualOf = (weekday) => weekly.find((w) => w.weekday === weekday);
   const hasService = days.some((d) => d.service);
 
   const openDay = (day) => {
+    setSelected(null);
     setFormError(null);
     const usual = usualOf(day.weekday);
     const [start, end] = splitTime(day.service?.time ?? usual?.time_label);
@@ -67,37 +69,29 @@ export default function Schedule({ days, weekly, staff, me, isAdmin, actions }) 
         </div>
       )}
 
-      <div className="stack gap-6">
-        {days.map((day) =>
-          day.closed ? (
-            <div key={day.key} className="card elev-sm day-card day-closed">
-              <div className="day-name">
-                {formatDay(day.date, lang)}
-                {day.isToday && <span className="tag tag-accent">{t('Today')}</span>}
-                <span className="tag tag-neutral">{t('Closed')}</span>
-              </div>
-              {isAdmin && (
-                <div className="shift-actions">
-                  <button className="btn btn-ghost" onClick={() => actions.clearServiceDay(day.key)}>
-                    {t('Reopen with the usual hours')}
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <DayCard
-              key={day.key}
-              day={day}
-              me={me}
-              isAdmin={isAdmin}
-              nameOf={nameOf}
-              onAssign={() => setAssigning(day)}
-              onEdit={() => openDay(day)}
-              onToggle={(mine) => actions.toggleSelf(day.key, mine)}
-            />
-          ),
-        )}
-      </div>
+      {days.length > 0 && (
+        <Calendar days={days} me={me} isAdmin={isAdmin} nameOf={nameOf} onOpen={setSelected} />
+      )}
+
+      {selected && (
+        <DayDialog
+          day={dayAt(days, selected)}
+          me={me}
+          isAdmin={isAdmin}
+          nameOf={nameOf}
+          onClose={() => setSelected(null)}
+          onAssign={(day) => {
+            setSelected(null);
+            setAssigning(day);
+          }}
+          onEdit={openDay}
+          onReopen={(day) => {
+            setSelected(null);
+            actions.clearServiceDay(day.key);
+          }}
+          onToggle={(day, mine) => actions.toggleSelf(day.key, mine)}
+        />
+      )}
 
       {showUnavailable && <Unavailable days={days} staff={staff} onClose={() => setShowUnavailable(false)} />}
 
@@ -261,70 +255,198 @@ export default function Schedule({ days, weekly, staff, me, isAdmin, actions }) 
   );
 }
 
-function DayCard({ day, me, isAdmin, nameOf, onAssign, onEdit, onToggle }) {
+const addDays = ({ y, m, d }, n) => {
+  const t = new Date(Date.UTC(y, m - 1, d + n));
+  return { y: t.getUTCFullYear(), m: t.getUTCMonth() + 1, d: t.getUTCDate() };
+};
+const weekdayOf = ({ y, m, d }) => new Date(Date.UTC(y, m - 1, d)).getUTCDay() || 7; // 1 = Monday
+
+// The day at a date: the loaded one, or a day without a service (an admin can open it).
+function dayAt(days, key) {
+  const found = days.find((d) => d.key === key);
+  if (found) return found;
+  const date = parseDateKey(key);
+  return { key, date, weekday: weekdayOf(date), isToday: key === todayKey(), closed: false, exception: false, service: null };
+}
+
+const firstName = (name) => (name ?? '—').split(' ')[0];
+
+// Two weeks, Monday to Sunday: this week and the next. Past days are greyed out.
+function Calendar({ days, me, isAdmin, nameOf, onOpen }) {
+  const { t, lang } = useT();
+  const today = todayKey();
+  const t0 = parseDateKey(today);
+  const monday = addDays(t0, 1 - weekdayOf(t0));
+  const byKey = new Map(days.map((d) => [d.key, d]));
+  const cells = Array.from({ length: 14 }, (_, i) => {
+    const date = addDays(monday, i);
+    const key = dateKey(date);
+    return { key, date, past: key < today, day: byKey.get(key) };
+  });
+  const weekdayName = (date, style) =>
+    new Date(Date.UTC(date.y, date.m - 1, date.d)).toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-GB', {
+      weekday: style,
+      timeZone: 'UTC',
+    });
+  const monthName = (date) =>
+    new Date(Date.UTC(date.y, date.m - 1, date.d)).toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-GB', {
+      month: 'short',
+      timeZone: 'UTC',
+    });
+
+  return (
+    <div className="card elev-sm cal">
+      <div className="cal-grid" role="list">
+        {cells.slice(0, 7).map((c) => (
+          <div key={c.key} className="cal-head" aria-hidden="true">
+            {weekdayName(c.date, 'short')}
+          </div>
+        ))}
+        {cells.map((c, i) => {
+          const day = c.day;
+          const s = day?.service;
+          const open = s ? s.needed - s.assigned.length : 0;
+          const mine = s?.assigned.includes(me.id);
+          // Members open a day with a service; admins also open closed days and empty ones.
+          const clickable = !c.past && (s || isAdmin);
+          const showMonth = i === 0 || c.date.d === 1;
+          const state = c.past ? 'is-past' : day?.closed ? 'is-closed' : s ? (open > 0 ? 'is-open' : 'is-full') : 'is-empty';
+          const label = [
+            formatDay(c.date, lang),
+            day?.closed ? t('Closed') : s ? `${s.time}, ${t('{a} of {b} staffed', { a: s.assigned.length, b: s.needed })}` : t('No service'),
+            mine ? t('You are on it') : '',
+          ]
+            .filter(Boolean)
+            .join(' · ');
+          const body = (
+            <>
+              <span className="cal-date">
+                <span className={c.key === today ? 'cal-num cal-today' : 'cal-num'}>{c.date.d}</span>
+                {showMonth && <span className="cal-month">{monthName(c.date)}</span>}
+                {mine && <span className="tag tag-accent-2 cal-me">{t('Me')}</span>}
+              </span>
+              {!c.past && day?.closed && <span className="cal-note">{t('Closed')}</span>}
+              {!c.past && s && (
+                <>
+                  <span className="cal-time">{s.time}</span>
+                  <span className={open > 0 ? 'tag tag-warn cal-count' : 'tag tag-accent-2 cal-count'}>
+                    {s.assigned.length}/{s.needed}
+                  </span>
+                  {s.assigned.length > 0 && (
+                    <span className="cal-names">
+                      {s.assigned.slice(0, 3).map((id) => firstName(nameOf.get(id))).join(', ')}
+                      {s.assigned.length > 3 && ` +${s.assigned.length - 3}`}
+                    </span>
+                  )}
+                </>
+              )}
+              {!c.past && day?.exception && !day.closed && <span className="cal-flag" title={t('Special hours')} />}
+            </>
+          );
+          return clickable ? (
+            <button key={c.key} type="button" role="listitem" className={`cal-cell ${state}`} aria-label={label} onClick={() => onOpen(c.key)}>
+              {body}
+            </button>
+          ) : (
+            <div key={c.key} role="listitem" className={`cal-cell ${state}`} aria-label={label}>
+              {body}
+            </div>
+          );
+        })}
+      </div>
+      <div className="cal-legend">
+        <span><span className="tag tag-warn">1/2</span> {t('People missing')}</span>
+        <span><span className="tag tag-accent-2">2/2</span> {t('Full')}</span>
+        <span><span className="cal-flag cal-flag-static" /> {t('Special hours')}</span>
+      </div>
+    </div>
+  );
+}
+
+// Everything about one day, opened from the calendar.
+function DayDialog({ day, me, isAdmin, nameOf, onClose, onAssign, onEdit, onReopen, onToggle }) {
   const { t, lang } = useT();
   const s = day.service;
-  const open = s.needed - s.assigned.length;
-  const mine = s.assigned.includes(me.id);
+  const open = s ? s.needed - s.assigned.length : 0;
+  const mine = s?.assigned.includes(me.id);
   return (
-    <div className="card elev-sm day-card">
-      <div className="day-name">
-        {formatDay(day.date, lang)}
-        {day.isToday && <span className="tag tag-accent">{t('Today')}</span>}
-        {day.exception && <span className="tag tag-neutral">{t('Special hours')}</span>}
-      </div>
-      <div className="shift">
-        <div className="shift-head">
-          <div className="shift-time">{s.time}</div>
-          <span className={open > 0 ? 'tag tag-warn' : 'tag tag-accent-2'}>
-            {open > 0 ? t('{n} open', { n: open }) : t('Full')}
-          </span>
-        </div>
-        <div className="shift-staffed">{t('{a} of {b} staffed', { a: s.assigned.length, b: s.needed })}</div>
-        {s.assigned.length > 0 && (
-          <div className="shift-people">
-            {s.assigned.map((id) => (
-              <span key={id} className="shift-person">
-                {nameOf.get(id) ?? '—'}
-                {s.busy.includes(id) && (
-                  <span className="tag tag-warn" title={t('Their calendar shows an event at this time')}>
-                    {t('Busy')}
-                  </span>
-                )}
-              </span>
-            ))}
-          </div>
-        )}
-        <div className="shift-actions">
-          {isAdmin ? (
-            <>
-              <button className="btn btn-secondary" onClick={onAssign}>{t('Assign staff')}</button>
-              <button className="btn btn-ghost" onClick={onEdit}>{t('Edit this day')}</button>
-            </>
-          ) : (
-            <button className="btn btn-secondary" disabled={open <= 0 && !mine} onClick={() => onToggle(mine)}>
-              {mine ? t('Leave shift') : t('Take shift')}
-            </button>
+    <Dialog title={formatDay(day.date, lang)} onClose={onClose}>
+      {day.closed ? (
+        <>
+          <p style={{ margin: 0 }}>{t('Closed that day.')}</p>
+          {isAdmin && (
+            <div className="shift-actions">
+              <button className="btn btn-secondary" onClick={() => onReopen(day)}>{t('Reopen with the usual hours')}</button>
+              <button className="btn btn-ghost" onClick={() => onEdit(day)}>{t('Edit this day')}</button>
+            </div>
           )}
-        </div>
-      </div>
-      <div className="free-row">
-        <div className="label-caps">{t('Free')}</div>
-        {!day.hasCalendars ? (
-          <span className="text-muted" style={{ fontSize: 13 }}>{t('No calendars connected yet')}</span>
-        ) : day.free.length === 0 ? (
-          <span className="text-muted" style={{ fontSize: 13 }}>{t('Nobody is free')}</span>
-        ) : (
-          day.free.map((person) => <span key={person} className="tag tag-accent-2 tag-lg">{person}</span>)
-        )}
-      </div>
-      {day.hasCalendars && (
-        <div className="hint">
-          {day.noClass.length > 0 && <span>{t('No classes that day: {names}.', { names: day.noClass.join(', ') })} </span>}
-          <span>{t('Availability is only a hint: it never decides who works a shift.')}</span>
-        </div>
+        </>
+      ) : !s ? (
+        <>
+          <p style={{ margin: 0 }}>{t('No service planned that day.')}</p>
+          {isAdmin && (
+            <div className="shift-actions">
+              <button className="btn btn-secondary" onClick={() => onEdit(day)}>{t('Open this day')}</button>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <div className="shift">
+            <div className="shift-head">
+              <div className="shift-time">{s.time}</div>
+              <span className={open > 0 ? 'tag tag-warn' : 'tag tag-accent-2'}>
+                {open > 0 ? t('{n} open', { n: open }) : t('Full')}
+              </span>
+            </div>
+            {day.exception && <span className="tag tag-neutral self-start">{t('Special hours')}</span>}
+            <div className="shift-staffed">{t('{a} of {b} staffed', { a: s.assigned.length, b: s.needed })}</div>
+            {s.assigned.length > 0 && (
+              <div className="shift-people">
+                {s.assigned.map((id) => (
+                  <span key={id} className="shift-person">
+                    {nameOf.get(id) ?? '—'}
+                    {s.busy.includes(id) && (
+                      <span className="tag tag-warn" title={t('Their calendar shows an event at this time')}>
+                        {t('Busy')}
+                      </span>
+                    )}
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="shift-actions">
+              {isAdmin ? (
+                <>
+                  <button className="btn btn-secondary" onClick={() => onAssign(day)}>{t('Assign staff')}</button>
+                  <button className="btn btn-ghost" onClick={() => onEdit(day)}>{t('Edit this day')}</button>
+                </>
+              ) : (
+                <button className="btn btn-primary" disabled={open <= 0 && !mine} onClick={() => onToggle(day, mine)}>
+                  {mine ? t('Leave shift') : t('Take shift')}
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="free-row">
+            <div className="label-caps">{t('Free')}</div>
+            {!day.hasCalendars ? (
+              <span className="text-muted" style={{ fontSize: 13 }}>{t('No calendars connected yet')}</span>
+            ) : day.free.length === 0 ? (
+              <span className="text-muted" style={{ fontSize: 13 }}>{t('Nobody is free')}</span>
+            ) : (
+              day.free.map((person) => <span key={person} className="tag tag-accent-2 tag-lg">{person}</span>)
+            )}
+          </div>
+          {day.hasCalendars && (
+            <div className="hint">
+              {day.noClass.length > 0 && <span>{t('No classes that day: {names}.', { names: day.noClass.join(', ') })} </span>}
+              <span>{t('Availability is only a hint: it never decides who works a shift.')}</span>
+            </div>
+          )}
+        </>
       )}
-    </div>
+    </Dialog>
   );
 }
 
