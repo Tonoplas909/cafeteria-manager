@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from './api.js';
 import { useT, LangSwitch } from './i18n.jsx';
 import logoUrl from './assets/miage-logo.png';
+import Michel from './Michel.jsx';
 
 const redirectTo = () => window.location.origin + window.location.pathname;
 
@@ -9,6 +10,7 @@ function Shell({ title, children }) {
   return (
     <div className="login">
       <div className="card elev-md login-card">
+        <Michel pose="cheer" className="michel-login" />
         <div className="login-top">
           <div className="brand" style={{ padding: 0 }}>
             <img className="brand-logo" src={logoUrl} alt="" />
