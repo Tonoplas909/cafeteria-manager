@@ -12,7 +12,7 @@
   #root { height: auto; }
   .sidebar { display: contents; } /* its three blocks are laid out by .app instead */
 
-  .brand {
+  .sidebar .brand {
     order: 0; position: sticky; top: 0; z-index: 20;
     padding: var(--space-3) var(--space-4); padding-top: calc(var(--space-3) + env(safe-area-inset-top));
     background: var(--color-ink); color: #fff;
