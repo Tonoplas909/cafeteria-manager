@@ -252,7 +252,14 @@ button.cal-cell:focus-visible { outline: 2px solid var(--color-accent); outline-
 .cal-cell.is-empty .cal-num { color: var(--color-neutral-500); }
 /* pills sit on a tinted cell: give them a white ground so they stay readable */
 .cal-cell .cal-count, .cal-cell .cal-me { background: #fff; }
-.cal-cell.is-past { background: transparent; opacity: 0.45; }
+.cal-cell.is-past { opacity: 0.5; }
+.cal-nav { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.cal-range {
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 20px;
+  text-transform: uppercase; letter-spacing: 0.01em; min-width: 13ch; text-align: center;
+}
+.cal-nav .btn-icon { width: 44px; height: 44px; }
+.cal-grid.is-loading { opacity: 0.55; transition: opacity 0.15s; }
 .cal-date { display: flex; align-items: center; gap: 6px; width: 100%; }
 .cal-num { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 20px; line-height: 1; }
 .cal-today {

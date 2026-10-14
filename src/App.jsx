@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase, loadAll, api, auth } from './api.js';
 import Login, { SetPassword } from './Login.jsx';
 import Dialog from './Dialog.jsx';
@@ -50,16 +50,34 @@ function Signed({ session }) {
   const [info, setInfo] = useState(null);
   const [pwDialog, setPwDialog] = useState(false);
 
+  // Which two-week page of the schedule is shown (0 = this week and the next).
+  const [page, setPage] = useState(0);
+  const pageRef = useRef(0);
+  const latest = useRef(0); // only the most recent load may update the screen
+
   const refresh = useCallback(async () => {
+    const ticket = ++latest.current;
     try {
-      setData(await loadAll());
+      const next = await loadAll(pageRef.current);
+      if (ticket !== latest.current) return;
+      setData(next);
       setStatus('ready');
       setError(null);
     } catch (e) {
+      if (ticket !== latest.current) return;
       setError(e.message || String(e));
       setStatus((s) => (s === 'loading' ? 'error' : s));
     }
   }, []);
+
+  const goToPage = useCallback(
+    (p) => {
+      pageRef.current = p;
+      setPage(p);
+      refresh();
+    },
+    [refresh],
+  );
 
   // Load, then refresh calendars in the background if they are stale.
   useEffect(() => {
@@ -175,7 +193,18 @@ function Signed({ session }) {
           )}
           {status === 'loading' && <p className="text-muted">{t('Loading…')}</p>}
           {status === 'ready' && screen === 'schedule' && (
-            <Schedule days={data.days} weekly={data.weekly} staff={data.staff} me={me} isAdmin={isAdmin} actions={actions} />
+            <Schedule
+              days={data.days}
+              range={data.range}
+              page={page}
+              loadedPage={data.page}
+              onPage={goToPage}
+              weekly={data.weekly}
+              staff={data.staff}
+              me={me}
+              isAdmin={isAdmin}
+              actions={actions}
+            />
           )}
           {status === 'ready' && screen === 'inventory' && (
             <Inventory inventory={data.inventory} adjustStock={actions.adjustStock} importProducts={actions.importProducts} setTargets={actions.setTargets} canEdit={isAdmin} />

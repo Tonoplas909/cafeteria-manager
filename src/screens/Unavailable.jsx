@@ -8,7 +8,8 @@ export default function Unavailable({ days, staff, onClose }) {
   const nameOf = new Map(staff.map((m) => [m.id, m.name]));
 
   const toCover = days
-    .filter((day) => day.service && day.service.assigned.length < day.service.needed)
+    // only upcoming days whose calendar hints have been worked out
+    .filter((day) => day.service && day.hints && day.service.assigned.length < day.service.needed)
     .map((day) => {
       const shift = day.service;
       const rows = shift.status ?? [];

@@ -58,6 +58,11 @@ export default {
     'Les créneaux à pourvoir, et les personnes dont l’agenda est libre.',
   'Usual hours': 'Horaires habituels',
   'No service': 'Pas de service',
+  'Previous two weeks': 'Deux semaines précédentes',
+  'Next two weeks': 'Deux semaines suivantes',
+  'This day is over.': 'Ce jour est passé.',
+  'Who is free is only worked out for the next two weeks, from connected calendars.':
+    "Les disponibilités ne sont calculées que pour les deux prochaines semaines, à partir des agendas connectés.",
   'You are on it': 'Vous y êtes',
   Me: 'Moi',
   'People missing': 'Il manque du monde',
