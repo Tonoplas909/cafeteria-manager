@@ -19,24 +19,40 @@ const check = ({ data, error }) => {
 // ISO order: index + 1 is the weekday number stored in opening_hours (1 = Monday).
 export const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-// Reads every table and shapes it the way the screens expect.
-export async function loadAll() {
+// Days per page of the schedule: two weeks, Monday to Sunday.
+export const PAGE_DAYS = 14;
+
+// The page `page` steps from the current one (0 = this week and the next, -1 = the two weeks
+// before…): its first and last day, as { y, m, d }.
+export function pageRange(page, today = parseDateKey(todayKey())) {
+  const weekday = new Date(Date.UTC(today.y, today.m - 1, today.d)).getUTCDay() || 7;
+  const from = addDays(today, 1 - weekday + page * PAGE_DAYS);
+  return { from, to: addDays(from, PAGE_DAYS - 1) };
+}
+
+// Reads every table and shapes it the way the screens expect. The schedule covers one
+// two-week page of the calendar; `page` says which.
+export async function loadAll(page = 0) {
   const today = todayKey();
-  const last = dateKey(addDays(parseDateKey(today), HORIZON_DAYS - 1));
+  const range = pageRange(page);
+  const first = dateKey(range.from);
+  const last = dateKey(range.to);
+  // Calendar hints only exist where calendar-sync computes them: the next HORIZON_DAYS days.
+  const hintsUntil = dateKey(addDays(parseDateKey(today), HORIZON_DAYS - 1));
   const [staff, products, weekly, exceptions, assignments, status, calendars] = await Promise.all([
     supabase.from('staff').select('*').order('id').then(check),
     supabase.from('products').select('*').order('id').then(check),
     supabase.from('opening_hours').select('*').order('weekday').then(check),
-    supabase.from('service_days').select('*').gte('date', today).lte('date', last).then(check),
-    supabase.from('service_assignments').select('*').gte('date', today).lte('date', last).then(check),
-    supabase.from('service_status').select('*').gte('date', today).lte('date', last).then(check),
+    supabase.from('service_days').select('*').gte('date', first).lte('date', last).then(check),
+    supabase.from('service_assignments').select('*').gte('date', first).lte('date', last).then(check),
+    supabase.from('service_status').select('*').gte('date', first).lte('date', last).then(check),
     supabase.from('calendars').select('id, name, last_sync, staff_id').order('id').then(check),
   ]);
 
   const withCalendar = new Set(calendars.map((c) => c.staff_id));
   // One service a day at most, identified by its date: the usual hours of its weekday,
   // unless that date has an exception. Placements belong to the date.
-  const days = servicesFrom(weekly, exceptions, parseDateKey(today), HORIZON_DAYS).map((s) => {
+  const days = servicesFrom(weekly, exceptions, range.from, PAGE_DAYS).map((s) => {
     const rows = status.filter((r) => r.date === s.key);
     const service = s.closed
       ? null
@@ -57,6 +73,9 @@ export async function loadAll() {
       date: s.date,
       weekday: s.weekday,
       isToday: s.key === today,
+      past: s.key < today,
+      // whether calendar-sync has computed who is busy or free that day
+      hints: s.key >= today && s.key <= hintsUntil,
       closed: s.closed,
       exception: s.exception,
       service,
@@ -73,6 +92,8 @@ export async function loadAll() {
     days,
     weekly,
     exceptions,
+    page,
+    range,
     inventory: products.map((p) => ({
       id: p.id,
       name: p.name,
