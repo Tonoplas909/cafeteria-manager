@@ -13,7 +13,12 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const ALLOWED_REDIRECTS = ['https://tonoplas909.github.io/cafeteria-manager/', 'http://localhost:5173/'];
+// Where an invitation or reset link may send people back to: the site itself (the SITE_URL secret,
+// for example https://cafet.example.org/) and local development. Set it once per project with:
+//   supabase secrets set SITE_URL=https://cafet.example.org/
+const SITE_URL = (Deno.env.get('SITE_URL') ?? '').trim();
+const withSlash = (u: string) => (u.endsWith('/') ? u : u + '/');
+const ALLOWED_REDIRECTS = [...(SITE_URL ? [withSlash(SITE_URL)] : []), 'http://localhost:5173/'];
 const safeRedirect = (v: unknown) =>
   typeof v === 'string' && ALLOWED_REDIRECTS.some((p) => v.startsWith(p)) ? v : ALLOWED_REDIRECTS[0];
 
@@ -45,6 +50,9 @@ Deno.serve(async (req) => {
     return json({ error: 'Invalid JSON' }, 400);
   }
   const redirectTo = safeRedirect(body.redirectTo);
+  if ((body.action === 'create' || body.action === 'send-link') && !SITE_URL) {
+    return json({ error: 'SITE_URL is not set on the server: run  supabase secrets set SITE_URL=https://your-site/' }, 500);
+  }
 
   const findAuthUser = async (email: string) => {
     for (let page = 1; page <= 20; page++) {

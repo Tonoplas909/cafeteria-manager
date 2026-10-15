@@ -1,0 +1,12 @@
+# Lu par Netlify et Cloudflare Pages (ignoré ailleurs). Le service worker et la page d'accueil ne
+# doivent jamais être mis en cache long : sinon une mise à jour du site n'arrive pas aux téléphones.
+/sw.js
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Cache-Control: no-cache
+
+# Fichiers compilés : leur nom change à chaque version, on peut les garder un an.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

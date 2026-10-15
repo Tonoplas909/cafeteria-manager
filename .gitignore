@@ -1,4 +1,12 @@
 node_modules
 dist
-.env.local
+
+# variables d'environnement locales : ne jamais les versionner
 .env
+.env.local
+.env.*.local
+.env.production
+
+# fichiers créés par la CLI Supabase quand on lie un projet (contiennent l'identifiant du projet)
+supabase/.temp/
+supabase/.branches/
