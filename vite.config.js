@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 // After a build, give the service worker the list of this build's files (so the whole app is
 // stored on first visit and opens offline) and a cache name that changes with every deploy.
@@ -31,4 +32,16 @@ function precacheServiceWorker() {
 }
 
 // Relative base so the build works from a GitHub Pages sub-path (/<repo>/).
-export default defineConfig({ base: './', plugins: [react(), precacheServiceWorker()] });
+// Two pages: the app itself, and the public stock board (stock/), which needs no sign-in.
+export default defineConfig({
+  base: './',
+  plugins: [react(), precacheServiceWorker()],
+  build: {
+    rollupOptions: {
+      input: {
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        stock: fileURLToPath(new URL('./stock/index.html', import.meta.url)),
+      },
+    },
+  },
+});
